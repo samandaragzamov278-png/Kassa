@@ -1328,7 +1328,6 @@ html.sz-vt::view-transition-new(root){animation-name:szIn}
   html:not(.m-full) body>.wrap{display:none!important}
   html:not(.m-full) #mApp{display:block}
   html:not(.m-full) #sbUser{display:none!important}
-  html:not(.m-full) body::before,html:not(.m-full) body::after{display:none!important}
   html.m-full #mBack{display:flex}
 }
 #mBack{display:none;position:fixed;left:50%;transform:translateX(-50%);top:calc(8px + env(safe-area-inset-top,0px));z-index:70;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:17px;background:var(--accent);color:#fff;font:600 13.5px var(--f-ui);box-shadow:0 6px 18px rgba(0,0,0,.2)}
@@ -1435,6 +1434,92 @@ select.m-in{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3
 .m-sheet .m-chip{background:var(--m-bg)}
 #mApp .m-chip.on,.m-sheet .m-chip.on{border-color:var(--ink)}
 #mBack{top:auto;bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+
+/* ===== жидкое стекло, как на основном сайте ===== */
+#mApp{position:relative;z-index:1;background:transparent}
+.m-card{background-color:var(--matte);background-image:linear-gradient(180deg,var(--gloss),transparent 42%);border:1px solid var(--glass-brd);box-shadow:inset 0 1px 0 var(--glass-hi),var(--shadow);border-radius:22px}
+.m-card.m-hero{background:var(--hero);border:1px solid rgba(255,255,255,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 14px 34px color-mix(in srgb,#0a84ff 34%,transparent)}
+.m-g2>.m-card{border-radius:20px}
+.m-seg{background:var(--wash);border:1px solid var(--glass-brd);box-shadow:inset 0 1px 0 var(--glass-hi)}
+.m-seg button.on{background:var(--matte);box-shadow:0 3px 10px rgba(0,0,0,.12),inset 0 1px 0 var(--glass-hi)}
+#mApp .m-chip,.m-sheet .m-chip{background:var(--matte);border:1px solid var(--glass-brd);box-shadow:inset 0 1px 0 var(--glass-hi)}
+#mApp .m-chip.on,.m-sheet .m-chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.m-btn{background:color-mix(in srgb,var(--accent) 14%,var(--matte));border:1px solid var(--glass-brd)!important;box-shadow:inset 0 1px 0 var(--glass-hi)!important}
+.m-btn.pri{background:var(--hero);color:#fff;border:1px solid rgba(255,255,255,.28)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 8px 20px color-mix(in srgb,var(--accent) 30%,transparent)!important}
+.m-btn.red{background:color-mix(in srgb,var(--minus) 12%,var(--matte))}
+.m-tb{left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));padding:5px;border-radius:26px;background:var(--bar);border:1px solid var(--glass-brd);box-shadow:inset 0 1px 0 var(--glass-hi),0 10px 30px rgba(0,0,0,.14);-webkit-backdrop-filter:blur(22px) saturate(190%);backdrop-filter:blur(22px) saturate(190%)}
+.m-tb button{border-radius:20px;min-height:52px;font-size:11px}
+.m-tb button.on{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.m-scr{padding-bottom:calc(118px + env(safe-area-inset-bottom,0px))}
+.m-fab{bottom:calc(96px + env(safe-area-inset-bottom,0px));background:var(--hero)!important;border:1px solid rgba(255,255,255,.3)!important}
+.m-sheet{background:var(--bar);-webkit-backdrop-filter:blur(26px) saturate(190%);backdrop-filter:blur(26px) saturate(190%);border-top:1px solid var(--glass-brd);box-shadow:inset 0 1px 0 var(--glass-hi),0 -12px 40px rgba(0,0,0,.18)}
+.m-in{background:var(--wash);border:1px solid var(--glass-brd)}
+.m-sheet .m-card.m-list{background:var(--wash)!important}
+.m-toast{background:var(--bar);color:var(--ink);border:1px solid var(--glass-brd);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);box-shadow:0 10px 30px rgba(0,0,0,.18)}
+/* ===== календарь продаж ===== */
+.m-cal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.m-cal-h b{font-size:17px;font-weight:700}
+.m-cal-nb{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--wash)!important;color:var(--accent);font-size:20px;line-height:1}
+.m-cal-nb:disabled{opacity:.35}
+.m-cal-wd,.m-cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.m-cal-wd span{text-align:center;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;padding-bottom:2px}
+.m-cal-wd span:last-child{color:var(--minus)}
+.m-cd{position:relative;aspect-ratio:1/1.12;border-radius:12px;padding:5px 4px 6px;display:flex;flex-direction:column;justify-content:space-between;min-width:0;background:var(--wash);border:1px solid transparent;text-align:left;color:var(--ink)}
+.m-cd .n{font-size:12.5px;font-weight:600;line-height:1}
+.m-cd .v{font-size:12px;font-weight:700;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+.m-cd .pb{display:flex;height:3px;border-radius:2px;overflow:hidden;gap:1px}
+.m-cd .pb i{display:block;height:100%}
+.m-cd.off{background:transparent;border:1px dashed var(--line)}
+.m-cd.off .n{color:var(--minus);opacity:.8}
+.m-cd.fut{background:transparent;border:1px solid var(--line);opacity:.6}
+.m-cd.tod{border:2px solid var(--accent)}
+.m-cd.hot{color:#fff}
+.m-cd.ok::after{content:"";position:absolute;top:5px;right:5px;width:6px;height:6px;border-radius:50%;background:var(--plus);box-shadow:0 0 0 1.5px var(--matte)}
+.m-cd.empty{visibility:hidden}
+.m-cal-leg{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:10px;font-size:11.5px;color:var(--muted);align-items:center}
+.m-cal-leg i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:0}
+.m-cal-scale{display:inline-block;width:46px;height:8px;border-radius:4px;background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 12%,transparent),var(--accent));margin:0 4px;vertical-align:-1px}
+.m-cal-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.m-cal-sum div{background:var(--wash);border-radius:12px;padding:8px 10px;min-width:0}
+.m-cal-sum small{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m-cal-sum b{font-size:14.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.m-wk{display:grid;grid-template-columns:62px 1fr auto;gap:8px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:13.5px}
+.m-wk .m-bar{height:6px}
+/* ===== диаграммы ===== */
+.m-donut{display:flex;align-items:center;gap:14px}
+.m-donut svg{width:118px;height:118px;flex:none}
+.m-legend{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.m-legend div{display:flex;justify-content:space-between;gap:8px;font-size:13.5px}
+.m-legend span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-legend b{white-space:nowrap;font-variant-numeric:tabular-nums}
+.m-hb{margin-bottom:11px}
+.m-hb:last-child{margin-bottom:0}
+.m-hb .m-row{font-size:14px;margin-bottom:5px}
+.m-hb .m-row span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-hb .m-row b{white-space:nowrap;font-variant-numeric:tabular-nums}
+.m-hb small{display:block;font-size:12px;color:var(--muted);margin-top:4px}
+.m-gb{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:12px;align-items:end;height:150px;padding-top:18px}
+.m-gb .col{display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;min-width:0}
+.m-gb .bars{display:flex;gap:4px;align-items:flex-end;height:100%;width:100%;justify-content:center}
+.m-gb .bars i{display:block;width:40%;max-width:26px;border-radius:6px 6px 3px 3px;position:relative}
+.m-gb .lbl{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.m-gb .gr{font-size:12px;font-weight:700}
+.m-rank{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.m-rank:first-of-type{border-top:0}
+.m-rank .no{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--wash);flex:none}
+.m-rank .no.g{background:linear-gradient(135deg,#ffd60a,#ff9f0a);color:#fff}
+.m-rank .l{flex:1;min-width:0}
+.m-rank .l b{display:block;font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m-rank .l small{display:block;font-size:12px;color:var(--muted)}
+.m-rank .r{text-align:right;font-weight:700;font-size:14px;white-space:nowrap}
+.m-rank .r small{display:block;font-weight:500;font-size:12px;color:var(--muted)}
+.m-wtitle{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:12px}
+.m-wtitle b{font-size:16px;font-weight:700}
+.m-pg{padding:10px 0;border-top:1px solid var(--line)}
+.m-pg:first-of-type{border-top:0}
+.m-pg.best{background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:12px;padding:10px;margin:0 -10px;border-top-color:transparent}
+.m-pg small{display:block;font-size:12px;color:var(--muted);margin-top:5px;line-height:1.35}
+.m-wtitle{flex-wrap:wrap;row-gap:2px}.m-wtitle b{white-space:nowrap}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
@@ -5100,6 +5185,16 @@ addEventListener("scroll",()=>{if(!t)t=requestAnimationFrame(chk)},{passive:true
   const bars=(vals,hl,labels)=>{const m=Math.max(1,...vals),n=vals.length,w=100/n;
     return `<svg class="m-spark" viewBox="0 0 100 76" preserveAspectRatio="none" aria-hidden="true">${vals.map((v,i)=>{const h=v/m*62;return `<rect x="${(i*w+w*.16).toFixed(2)}" y="${(64-h).toFixed(1)}" width="${(w*.68).toFixed(2)}" height="${Math.max(h,v?1.5:0).toFixed(1)}" rx="1.2" fill="${i===hl?"var(--accent)":"color-mix(in srgb,var(--accent) 35%,transparent)"}"/>`}).join("")}</svg>`+(labels?`<div class="m-row m-sm" style="margin-top:4px;font-size:11px">${labels.map(l=>`<span style="flex:1;text-align:center">${l}</span>`).join("")}</div>`:"")};
 
+  const PAYC={"Наличные":"#34c759","Терминал":"#0a84ff","QR/Payme":"#af52de","Перечисление":"#ff9f0a"};
+  const CATC=["#0a84ff","#34c759","#ff9f0a","#af52de","#ff375f","#5ac8fa","#ffd60a","#8e8e93","#30b0c7","#a2845e"];
+  const pct=(v,t)=>t?Math.round(v/t*100)+"%":"—";
+  function donut(items,cTop,cSub){const tot=items.reduce((a,o)=>a+o.value,0)||1;const R=46,L=2*Math.PI*R;let off=0;
+    const arcs=items.map(o=>{const len=o.value/tot*L;const g=items.length>1?Math.min(2,len*.25):0;const a=`<circle cx="59" cy="59" r="${R}" fill="none" stroke="${o.color}" stroke-width="16" stroke-dasharray="${Math.max(0,len-g).toFixed(2)} ${L.toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 59 59)"/>`;off+=len;return a}).join("");
+    return `<div class="m-donut"><svg viewBox="0 0 118 118" aria-hidden="true"><circle cx="59" cy="59" r="${R}" fill="none" stroke="var(--wash)" stroke-width="16"/>${arcs}<text x="59" y="58" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">${cTop}</text><text x="59" y="74" text-anchor="middle" font-size="10" fill="var(--muted)">${cSub||""}</text></svg>
+      <div class="m-legend">${items.map(o=>`<div><span><span class="m-dot" style="background:${o.color}"></span>${esc(o.label)}</span><b>${pct(o.value,tot)}</b></div>`).join("")}</div></div>`}
+  function hbars(items){const mx=Math.max(1,...items.map(o=>o.value));return items.map(o=>`<div class="m-hb"><div class="m-row"><span>${o.dot?`<span class="m-dot" style="background:${o.color}"></span>`:""}${esc(o.label)}</span><b>${o.valTxt!=null?o.valTxt:mln(o.value)}</b></div><div class="m-bar"><b style="width:${(o.value/mx*100).toFixed(1)}%;background:${o.color}"></b></div>${o.sub?`<small>${o.sub}</small>`:""}</div>`).join("")}
+  const W=(title,sub,body)=>`<div class="m-card"><div class="m-wtitle"><b>${title}</b>${sub?`<span class="m-sm">${sub}</span>`:""}</div>${body}</div>`;
+  const NODET=s=>/без детализации|погашени/i.test(s.cat||"");
   // ---------- данные ----------
   const sales=()=>(S()&&S().sales)||[];
   const points=()=>{const st=S()&&S().settings;return (st&&st.points&&st.points.length?st.points:["Премиум","Яшнабад","Сергели","C1"])};
@@ -5301,6 +5396,33 @@ addEventListener("scroll",()=>{if(!t)t=requestAnimationFrame(chk)},{passive:true
     if(p==="all")return ["0000-00-00","9999-99-99","Всё время"];
     return [m+"-01",t,MN[+m.slice(5,7)-1]]}
   const prevRange=(f,t)=>{if(f<"1000")return null;const n=Math.round((pd(t)-pd(f))/864e5)+1;return [addD(f,-n),addD(f,-1)]};
+  function calHTML(){
+    const t=today(),cm=t.slice(0,7);if(!st.cM)st.cM=cm;const m=st.cM;
+    const months=[...new Set(sales().map(s=>(s.date||"").slice(0,7)).filter(Boolean))].sort();const minM=months[0]||cm;
+    const first=pd(m+"-01"),end=+monthEnd(m).slice(8);
+    let list=sales().filter(s=>(s.date||"").startsWith(m));if(st.pt!=="all")list=list.filter(s=>s.point===st.pt);
+    const by={},byP={};list.forEach(s=>{const v=+s.sum||0;by[s.date]=(by[s.date]||0)+v;const o=byP[s.date]||(byP[s.date]={});o[s.point]=(o[s.point]||0)+v});
+    let tgt=0,off=[0];try{off=(S().planCfg&&S().planCfg.off)||[0];const P=S().plCalc(m);if(P.c.total){let tot=P.c.total;if(st.pt!=="all")tot=tot*(+P.shares[st.pt]||0)/100;tgt=tot/(P.work.length||1)}}catch(e){}
+    const vals=Object.values(by),mx=Math.max(1,...vals),total=vals.reduce((a,b)=>a+b,0);
+    const best=Object.keys(by).reduce((b,d)=>!b||by[d]>by[b]?d:b,"");
+    const lead=(first.getDay()+6)%7;let cells="";
+    for(let i=0;i<lead;i++)cells+=`<span class="m-cd empty"></span>`;
+    for(let i=1;i<=end;i++){const d=m+"-"+pad(i),v=by[d]||0,wd=pd(d).getDay(),fut=d>t,isOff=off.includes(wd)&&!v;
+      const k=v?.14+.86*(v/mx):0;const cls=["m-cd",fut?"fut":"",isOff?"off":"",d===t?"tod":"",v&&tgt&&v>=tgt?"ok":"",k>.58?"hot":""].join(" ");
+      const bg=v?`background:color-mix(in srgb,var(--accent) ${Math.round(k*100)}%,var(--wash))`:"";
+      const ps=byP[d]?ptsOrder(byP[d]):[];
+      cells+=`<button type="button" class="${cls}" ${v?`data-day="${d}"`:"disabled"} style="${bg}" aria-label="${dLong(d)}${v?": "+fmt(v):""}"><span class="n">${i}</span><span class="v">${v?(v/1e6).toFixed(1).replace(".",","):fut&&tgt&&!off.includes(wd)?'<span style="font-size:10px;font-weight:500;color:var(--accent)">план</span>':""}</span>${ps.length?`<span class="pb">${ps.map(p=>`<i style="flex:${byP[d][p]};background:${k>.58?"rgba(255,255,255,.85)":pcol(p)}"></i>`).join("")}</span>`:"<span></span>"}</button>`}
+    // недели пн–вс
+    const wk=[];let cur=null;for(let i=1;i<=end;i++){const d=m+"-"+pad(i),wd=pd(d).getDay();if(!cur||wd===1){cur={from:d,to:d,work:0,fact:0};wk.push(cur)}cur.to=d;if(!off.includes(wd))cur.work++;cur.fact+=by[d]||0}
+    const nm=MN[+m.slice(5,7)-1]+" "+m.slice(0,4);
+    return `<div class="m-card"><div class="m-cal-h"><button type="button" class="m-cal-nb" data-act="calp" ${m<=minM?"disabled":""} aria-label="Предыдущий месяц">‹</button><b>${nm}</b><button type="button" class="m-cal-nb" data-act="caln" ${m>=cm?"disabled":""} aria-label="Следующий месяц">›</button></div>
+      <div class="m-cal-sum"><div><small>Выручка</small><b>${mln(total)}</b></div><div><small>Дней с продажами</small><b>${Object.keys(by).length}</b></div><div><small>Лучший день</small><b>${best?+best.slice(8)+" · "+(by[best]/1e6).toFixed(1).replace(".",","):"—"}</b></div></div>
+      <div class="m-cal-wd">${["пн","вт","ср","чт","пт","сб","вс"].map(x=>`<span>${x}</span>`).join("")}</div>
+      <div class="m-cal">${cells}</div>
+      <div class="m-cal-leg"><span>меньше<span class="m-cal-scale"></span>больше</span>${tgt?`<span><i style="background:var(--plus)"></i>план дня ${mln(tgt)} выполнен</span>`:""}<span>в млн сум · нажмите на день</span></div>
+      ${tgt?`<div style="margin-top:12px">${wk.filter(w=>w.work).map(w=>{const pln=tgt*w.work,fut=t<w.from,r=pln?w.fact/pln:0;return `<div class="m-wk"><span class="m-sm">${+w.from.slice(8)}–${+w.to.slice(8)}</span><div class="m-bar"><b style="width:${Math.min(100,r*100).toFixed(1)}%;background:${r>=1?"var(--plus)":"var(--accent)"}"></b></div><b class="num ${fut?"m-sm":r>=1?"m-up":""}">${fut?"план "+mln(pln):mln(w.fact)+" / "+mln(pln)}</b></div>`}).join("")}</div>`:""}
+    </div>`;
+  }
   function scrSales(){
     const [f,t]=periodRange(st.period);
     let list=sales().filter(s=>inR(s,f,t));if(st.pt!=="all")list=list.filter(s=>s.point===st.pt);
@@ -5313,6 +5435,7 @@ addEventListener("scroll",()=>{if(!t)t=requestAnimationFrame(chk)},{passive:true
       <div class="m-chips">${[["all","Все точки"]].concat(points().map(p=>[p,p])).map(([k,l])=>`<button type="button" class="m-chip${st.pt===k?" on":""}" data-pt="${esc(k)}">${k!=="all"?`<span class="m-dot" style="background:${pcol(k)}"></span>`:""}${esc(l)}</button>`).join("")}</div>
       <div class="m-g2"><div class="m-card"><div class="m-lb">Выручка</div><div class="m-mid">${mln(a.sum)}</div><div class="m-sm ${ch>0?"m-up":ch<0?"m-dn":""}">${ch==null?"&nbsp;":(ch>0?"▲ ":ch<0?"▼ ":"")+Math.abs(ch)+"% к прошлому периоду"}</div></div>
       <div class="m-card"><div class="m-lb">Средний чек</div><div class="m-mid">${fmt(a.avg)}</div><div class="m-sm">${a.nc} ${pl(a.nc,"чек","чека","чеков")} · ${a.n} поз.</div></div></div>
+      <div class="m-sec">Календарь</div>${calHTML()}
       <div class="m-sec">По дням</div>`+
       (days.length?days.slice(0,st.sAll?400:40).map(d=>{const dl=list.filter(s=>s.date===d),da=agg(dl),ps=ptsOrder(da.pts);
         return `<div class="m-card" data-day="${d}" style="padding:14px 16px;cursor:pointer"><div class="m-row"><b style="font-size:17px">${dWd(d)}, ${dLong(d)}</b><b style="font-size:17px" class="num">${fmt(da.sum)}</b></div>
@@ -5368,6 +5491,42 @@ addEventListener("scroll",()=>{if(!t)t=requestAnimationFrame(chk)},{passive:true
       ${window.__sbEmail?`<div class="m-sec">Аккаунт</div><div class="m-card m-list"><div class="m-it"><div class="l" style="overflow:hidden;text-overflow:ellipsis">${esc(window.__sbEmail)}</div></div><div class="m-it tap" data-act="out"><div class="l m-dn">Выйти</div></div></div>`:""}`;
   }
   function withRange(f,t,fn){const F=S().F,o=Object.assign({},F);Object.assign(F,{from:f<"1000"?"":f,to:t>"9000"?"":t,point:"all",cat:"all",lk:"all"});try{return fn()}finally{Object.assign(F,o)}}
+  function anWidgets(list,a,pr){
+    const tot=a.sum||1,ps=ptsOrder(a.pts);let h="";
+    // доля точек
+    h+=W("Доля точек в выручке","",donut(ps.map(p=>({label:p,value:a.pts[p],color:pcol(p)})),mln(a.sum).replace(" млн",""),"млн сум"));
+    // точки сейчас и раньше
+    if(pr){const pa=agg(sales().filter(s=>inR(s,pr[0],pr[1])));const mx=Math.max(1,...ps.map(p=>Math.max(a.pts[p]||0,pa.pts[p]||0)));
+      h+=W("Точки: сейчас и раньше","яркие — сейчас, бледные — прошлый период",`<div class="m-gb" style="--n:${ps.length}">${ps.map(p=>{const c=a.pts[p]||0,o=pa.pts[p]||0,g=o?Math.round((c/o-1)*100):null;return `<div class="col"><span class="gr ${g>0?"m-up":g<0?"m-dn":"m-sm"}">${g==null?"новая":(g>0?"+":"")+g+"%"}</span><div class="bars"><i style="height:${(o/mx*100).toFixed(1)}%;background:${pcol(p)};opacity:.32"></i><i style="height:${(c/mx*100).toFixed(1)}%;background:${pcol(p)}"></i></div><span class="lbl">${esc(p)}</span><span class="m-sm" style="font-size:11px">${mln(c)}</span></div>`}).join("")}</div>`)}
+    // средний чек по точкам
+    const chk={};list.forEach(s=>{(chk[s.point]=chk[s.point]||new Set()).add(checkKey(s))});
+    h+=W("Средний чек по точкам","",hbars(ps.map(p=>({label:p,value:a.pts[p]/(chk[p]?chk[p].size:1),valTxt:fmt(a.pts[p]/(chk[p]?chk[p].size:1)),color:pcol(p),dot:1,sub:(chk[p]?chk[p].size:0)+" "+pl(chk[p]?chk[p].size:0,"чек","чека","чеков")}))));
+    // способы оплаты
+    const pays=PAYS.filter(p=>a.pay[p]).map(p=>({label:p==="QR/Payme"?"QR / Payme":p,value:a.pay[p],color:PAYC[p]}));
+    h+=W("Способы оплаты","",donut(pays,mln(a.sum).replace(" млн",""),"млн сум")+`<div style="margin-top:12px">${pays.map(o=>`<div class="m-row m-sm" style="padding:3px 0"><span><span class="m-dot" style="background:${o.color}"></span>${o.label}</span><b style="color:var(--ink)">${fmt(o.value)}</b></div>`).join("")}</div>`);
+    // выручка по категориям
+    const cs=Object.entries(a.cats).sort((x,y)=>y[1]-x[1]);
+    h+=W("Выручка по категориям","",donut(cs.slice(0,6).map(([k,v],i)=>({label:k,value:v,color:CATC[i]})).concat(cs.length>6?[{label:"Остальное",value:cs.slice(6).reduce((x,o)=>x+o[1],0),color:"#c7c7cc"}]:[]),mln(a.sum).replace(" млн",""),"млн сум")+`<div style="margin-top:14px">${hbars(cs.slice(0,8).map(([k,v],i)=>({label:k,value:v,color:CATC[i%CATC.length],sub:pct(v,tot)+" выручки"})))}</div>`);
+    // самые продаваемые товары
+    const prod=(arr)=>{const m={};arr.forEach(s=>{const k=(s.product||"—").trim();const o=m[k]||(m[k]={k,u:0,r:0,pts:{}});o.u+=+s.qty||0;o.r+=+s.sum||0;o.pts[s.point]=(o.pts[s.point]||0)+(+s.qty||0)});return Object.values(m)};
+    const rank=(rows,by)=>rows.map((o,i)=>`<div class="m-rank"><span class="no${i<3?" g":""}">${i+1}</span><div class="l"><b>${esc(o.k)}</b><small>${ptsOrder(o.pts).map(p=>esc(p)+" "+o.pts[p]).join(" · ")}</small></div><div class="r">${by==="u"?o.u+" шт":short(o.r)}<small>${by==="u"?short(o.r):o.u+" шт"}</small></div></div>`).join("")||`<div class="m-empty">Нет продаж</div>`;
+    const by=st.topBy||"u";const all=prod(list.filter(s=>!NODET(s)&&+s.qty>0)).sort((x,y)=>by==="u"?y.u-x.u||y.r-x.r:y.r-x.r);
+    h+=W("Самые продаваемые товары","",segH("topby",[["u","По штукам"],["r","По выручке"]],by)+rank(all.slice(0,10),by));
+    const fr=prod(list.filter(s=>s.cat==="Оправы"&&+s.qty>0)).sort((x,y)=>y.u-x.u||y.r-x.r);
+    const fu=fr.reduce((x,o)=>x+o.u,0);
+    h+=W("Самые продаваемые оправы",fu?fu+" шт всего":"",rank(fr.slice(0,10),"u"));
+    // ценовые группы по точкам
+    const BANDS=[[0,100000,"до 100 тыс"],[100000,200000,"100–200 тыс"],[200000,300000,"200–300 тыс"],[300000,500000,"300–500 тыс"],[500000,1e6,"500 тыс – 1 млн"],[1e6,2e6,"1–2 млн"],[2e6,1e15,"от 2 млн"]];
+    const pgCats=["Оправы","Очковые линзы","Солнцезащитные очки","Детские оправы","all"].filter(c=>c==="all"||a.cats[c]);
+    if(!st.pgCat||!pgCats.includes(st.pgCat))st.pgCat=pgCats[0]||"all";if(!st.pgPt)st.pgPt="all";
+    const pl2=list.filter(s=>+s.qty>0&&!NODET(s)&&(st.pgCat==="all"||s.cat===st.pgCat)&&(st.pgPt==="all"||s.point===st.pgPt));
+    const bd=BANDS.map(b=>({lbl:b[2],u:0,r:0,pr:{}}));pl2.forEach(s=>{const up=(+s.sum||0)/(+s.qty||1);const i=BANDS.findIndex(b=>up>=b[0]&&up<b[1]);if(i<0)return;const o=bd[i];o.u+=+s.qty||0;o.r+=+s.sum||0;o.pr[s.product]=(o.pr[s.product]||0)+(+s.qty||0)});
+    const U=bd.reduce((x,o)=>x+o.u,0),mxu=Math.max(1,...bd.map(o=>o.u)),bb=bd.reduce((m,o)=>o.u>m.u?o:m,bd[0]);
+    h+=W("Ценовые группы","цена за 1 шт после скидки",`<div class="m-chips" style="margin:0 -16px 8px">${pgCats.map(c=>`<button type="button" class="m-chip${st.pgCat===c?" on":""}" data-pgc="${esc(c)}">${c==="all"?"Все товары":esc(c)}</button>`).join("")}</div>
+      <div class="m-chips" style="margin:0 -16px 10px">${["all"].concat(points().filter(p=>sales().some(s=>s.point===p))).map(p=>`<button type="button" class="m-chip${st.pgPt===p?" on":""}" data-pgp="${esc(p)}">${p!=="all"?`<span class="m-dot" style="background:${pcol(p)}"></span>`:""}${p==="all"?"Все точки":esc(p)}</button>`).join("")}</div>
+      ${U?`<p class="m-sm" style="margin:0 0 8px">Чаще всего берут в группе <b style="color:var(--ink)">${bb.lbl}</b>: ${bb.u} шт (${pct(bb.u,U)}).</p>`+bd.filter(o=>o.u).map(o=>{const tp=Object.entries(o.pr).sort((x,y)=>y[1]-x[1]).slice(0,3);return `<div class="m-pg${o===bb?" best":""}"><div class="m-row" style="font-size:14px;margin-bottom:5px"><b>${o.lbl}</b><span class="num"><b>${o.u} шт</b> · ${short(o.r)}</span></div><div class="m-bar"><b style="width:${(o.u/mxu*100).toFixed(1)}%;background:${st.pgPt!=="all"?pcol(st.pgPt):"var(--accent)"}"></b></div><small>${tp.map(([k,v])=>esc(k)+" ×"+v).join(", ")}</small></div>`}).join(""):`<div class="m-empty">Нет продаж в этой группе</div>`}`);
+    return h;
+  }
   function scrAnalytics(){
     const [f,t,lab]=periodRange(st.aPeriod);const list=sales().filter(s=>inR(s,f,t)),a=agg(list),pr=prevRange(f,t);
     let ch=null;if(pr){const pa=agg(sales().filter(s=>inR(s,pr[0],pr[1])));if(pa.sum)ch=Math.round((a.sum/pa.sum-1)*100)}
@@ -5383,10 +5542,7 @@ addEventListener("scroll",()=>{if(!t)t=requestAnimationFrame(chk)},{passive:true
       <div class="m-card"><div class="m-lb">Лучший день</div><div class="m-mid">${best?mln(a.days[best]):"—"}</div><div class="m-sm">${best?dLong(best):""}</div></div>
       <div class="m-card"><div class="m-lb">В среднем в день</div><div class="m-mid">${days.length?mln(a.sum/days.length):"—"}</div><div class="m-sm">${days.length} ${pl(days.length,"день","дня","дней")} с продажами</div></div></div>
       ${vals.length>1?`<div class="m-card"><div class="m-lb">Выручка по дням</div><div style="margin-top:10px">${bars(vals.slice(-31),days.slice(-31).indexOf(best))}</div></div>`:""}
-      <div class="m-card"><div class="m-lb" style="margin-bottom:10px">Что продаём</div>${cs.map(([n,v])=>`<div style="margin-bottom:10px"><div class="m-row" style="font-size:14px;margin-bottom:4px"><span>${esc(n)}</span><b>${mln(v)}</b></div><div class="m-bar"><b style="width:${(v/cmax*100).toFixed(1)}%;background:var(--accent)"></b></div></div>`).join("")||`<div class="m-empty">Нет продаж</div>`}</div>
-      <div class="m-card"><div class="m-lb" style="margin-bottom:10px">Точки</div><div class="m-bar" style="height:12px">${ps.map(p=>`<b style="width:${(a.pts[p]/(a.sum||1)*100).toFixed(2)}%;background:${pcol(p)};border-radius:0"></b>`).join("")}</div>
-        <div style="margin-top:10px">${ps.map(p=>`<div class="m-row m-sm" style="padding:3px 0"><span><span class="m-dot" style="background:${pcol(p)}"></span>${esc(p)}</span><span><b style="color:var(--ink)">${mln(a.pts[p])}</b> · ${Math.round(a.pts[p]/(a.sum||1)*100)}%</span></div>`).join("")}</div></div>
-      <div class="m-card"><div class="m-lb" style="margin-bottom:10px">Как платят</div>${pays.map(([n,v])=>`<div class="m-row m-sm" style="padding:3px 0"><span>${n==="QR/Payme"?"QR / Payme":n}</span><span><b style="color:var(--ink)">${mln(v)}</b> · ${Math.round(v/(a.sum||1)*100)}%</span></div>`).join("")}</div>
+`+anWidgets(list,a,pr)+`
       <p class="m-sm" style="text-align:center;margin:6px 0">Все 58 показателей — в полной версии (Ещё → Полная версия сайта)</p>`;
   }
   function scrPlan(){
@@ -5481,6 +5637,7 @@ addEventListener("scroll",()=>{if(!t)t=requestAnimationFrame(chk)},{passive:true
     if(q("[data-back]")){pop();return}
     if(el=q("[data-act]")){const a=el.dataset.act;
       if(a==="sale")sheetSale();else if(a==="exp")sheetExpense();else if(a==="cash")sheetCash();
+      else if(a==="calp"||a==="caln"){const d=pd((st.cM||today().slice(0,7))+"-01");d.setMonth(d.getMonth()+(a==="caln"?1:-1));st.cM=iso(d).slice(0,7);render()}
       else if(a==="kall"){st.kAll=1;render()}else if(a==="sall"){st.sAll=1;render()}
       else if(a==="rpedit"){const R=S().rpCalc(st.rM,true).rows.find(x=>x.d===st.rD);sheetReport(st.rD,R&&R.r)}
       else if(a==="rpxl"){toast("Готовлю файл…");Promise.resolve().then(()=>S().rpExportAll(el)).then(()=>toast("Готово: файл Excel скачан")).catch(()=>toast("Не удалось собрать файл"))}
@@ -5500,6 +5657,9 @@ addEventListener("scroll",()=>{if(!t)t=requestAnimationFrame(chk)},{passive:true
     if(el=q('[data-seg="km"] button')){st.kM=el.dataset.v;st.kAll=0;render();return}
     if(el=q('[data-seg="rm"] button')){st.rM=el.dataset.v;st.rD="";render();return}
     if(el=q('[data-seg="dpt"] button')){st.dPt=el.dataset.v;render();return}
+    if(el=q('[data-seg="topby"] button')){st.topBy=el.dataset.v;render();return}
+    if(el=q("[data-pgc]")){st.pgCat=el.dataset.pgc;render();return}
+    if(el=q("[data-pgp]")){st.pgPt=el.dataset.pgp;render();return}
   });
   document.addEventListener("sales-updated",queue);
   document.addEventListener("kassa-updated",queue);
