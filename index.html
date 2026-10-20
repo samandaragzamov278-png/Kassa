@@ -1521,6 +1521,22 @@ select.m-in{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3
 .m-pg small{display:block;font-size:12px;color:var(--muted);margin-top:5px;line-height:1.35}
 .m-wtitle{flex-wrap:wrap;row-gap:2px}.m-wtitle b{white-space:nowrap}
 .m-gb{height:200px}.m-gb .bars{flex:1;height:auto;min-height:0}.m-gb .bars i{min-height:3px}
+
+.m-bzst{border-radius:10px;padding:8px 12px;font-size:14px;font-weight:600}
+.m-bzst.ok{background:rgba(52,199,89,.14);color:#1f8a3b}.m-bzst.warn{background:rgba(255,149,0,.16);color:#a35f00}
+.m-bzst.err{background:rgba(255,59,48,.14);color:#d70015}.m-bzst.wait{background:rgba(120,120,128,.12);color:var(--m-sub,#8e8e93)}
+:root[data-theme="dark"] .m-bzst.ok{color:#30d158}:root[data-theme="dark"] .m-bzst.warn{color:#ffb340}:root[data-theme="dark"] .m-bzst.err{color:#ff6961}
+.m-bzdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.m-bzdot.ok{background:#34c759}.m-bzdot.warn{background:#ff9500}.m-bzdot.err{background:#ff3b30}.m-bzdot.wait{background:#c7c7cc}
+
+.bz-st{border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;margin:4px 0 12px}
+.bz-st.ok{background:var(--plus-soft);color:var(--plus)}
+.bz-st.warn{background:#fff4e0;color:#a35f00}
+.bz-st.err{background:var(--minus-soft,#fde8e8);color:var(--minus)}
+.bz-st.wait{background:var(--wash);color:var(--muted,#888)}
+:root[data-theme="dark"] .bz-st.warn{background:#3a2a10;color:#ffb340}
+.bz-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:18px}
+@media (max-width:900px){.bz-grid{grid-template-columns:1fr}}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
@@ -2195,6 +2211,7 @@ window.__zw=function(){return innerWidth/(window.__uiZ||1)};window.__zh=function
     </div>
 
     <div id="stList" class="stack" hidden>
+      <section class="panel bz-panel" id="bzPanel" hidden></section>
       <div class="stnote"><span>ℹ️</span><span id="sNote"></span></div>
       <div class="seg" role="group" aria-label="Место" id="sPlaceSeg"></div>
       <section class="kpis" id="sKpis"></section>
@@ -4036,13 +4053,50 @@ window.SaifXL=(function(){
     $("mMiss").innerHTML=d.miss.length?`<thead><tr><th>Товар в продаже</th><th class="r">Продаж</th><th class="r">Шт</th><th class="r">Выручка</th></tr></thead><tbody>${d.miss.slice(0,30).map(o=>`<tr><td>${esc(o.k)}</td><td class="r num">${o.n}</td><td class="r num">${fmt(o.u)}</td><td class="r num">${fmt(o.rev)}</td></tr>`).join("")}</tbody>`:`<tbody><tr><td class="srcs">Все продажи периода нашлись на складе</td></tr></tbody>`;
   }
   function stockSold(){
-    const meta=stockMeta();const m=new Map();if(!meta)return m;const mt=batchMatcher();const from=meta.soldFrom||meta.date;
-    sales.forEach(s=>{if(from&&s.date<from)return;const r=mt(s.product,unitPrice(s),s.point);if(r&&r.b===null)m.set(r.it,(m.get(r.it)||0)+(+s.qty||0))});
+    const meta=stockMeta();const m=new Map();if(!meta)return m;const mt=batchMatcher();const from=meta.soldFrom||meta.date;const fPt=meta.soldFromPt||{},tPt=meta.soldFromTs||{};
+    sales.forEach(s=>{if(from&&s.date<from)return;const r=mt(s.product,unitPrice(s),s.point);if(!r||r.b!==null)return;const pt=r.it.pt;if(fPt[pt]&&(s.date<fPt[pt]||(s.date===fPt[pt]&&(+s.createdAt||0)<=(+tPt[pt]||0))))return;m.set(r.it,(m.get(r.it)||0)+(+s.qty||0))});
     return m;
   }
+
+  // ===================== Billz · Сергели =====================
+  let bzSync=null,bzBusy=false;
+  const bzTime=ms=>ms?new Date(ms).toLocaleString("ru-RU",{timeZone:"Asia/Tashkent",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}).replace(",",""):"—";
+  function bzNext(){const n=new Date(Date.now()+5*3600e3);let d=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate(),17));if(n>=d)d=new Date(d.getTime()+864e5);while(d.getUTCDay()===0)d=new Date(d.getTime()+864e5);return d.toISOString().slice(8,10)+"."+d.toISOString().slice(5,7)+" в 17:00"}
+  async function bzRun(){
+    if(bzBusy)return {ok:false,error:"уже идёт"};bzBusy=true;renderBz();
+    try{const r=await window.__sb.functions.invoke("billz-sync",{body:{}});bzBusy=false;renderBz();if(r.error)return {ok:false,error:String(r.error.message||r.error)};return r.data||{ok:true}}
+    catch(e){bzBusy=false;renderBz();return {ok:false,error:String(e&&e.message||e)}}
+  }
+  function bzState(){
+    const s=bzSync;if(!s)return {cls:"wait",t:"Ещё не запускалась"};
+    const last=s.ok?s:s.lastOk;const today=new Date(Date.now()+5*3600e3).toISOString().slice(0,10);
+    if(!s.ok)return {cls:"err",t:"Ошибка "+bzTime(s.at)+": "+(s.error||"")};
+    const bad=(s.salesCheck||[]).filter(x=>!x.ok).length+((s.attention||[]).length);
+    if(bad)return {cls:"warn",t:"Загружено "+bzTime(s.at)+" · есть расхождения"};
+    return {cls:"ok",t:"Загружено "+bzTime(s.at)+(s.to===today?"":" (сегодня ещё не было)")};
+  }
+  function renderBz(){
+    const el=$("bzPanel");if(!el)return;el.hidden=false;
+    const s=bzSync, st=bzState(), last=s&&(s.ok?s:s.lastOk);
+    const sc=(last&&last.salesCheck)||[], att=(last&&last.attention)||[], sk=(last&&last.stock)||null, sl=(last&&last.sales)||null;
+    el.innerHTML=`<div class="head" style="margin-bottom:8px;align-items:center"><div><h2>Billz → Касса · Сергели</h2><p class="note">Каждый день, кроме воскресенья, в 17:00 сами загружаются чеки и остатки. Следующая загрузка: ${bzNext()}.</p></div>
+      <button type="button" id="bzRunBtn" ${bzBusy?"disabled":""}>${bzBusy?"Загружаю…":"Обновить сейчас"}</button></div>
+      <div class="bz-st ${st.cls}">${esc(st.t)}</div>
+      ${last?`<div class="bz-grid">
+        <div><b>Продажи</b><div class="note">${sl&&sl.checks?`добавлено ${sl.checks} ${pl(sl.checks,"чек","чека","чеков")} на ${fmt(sl.sum)} сум`:"новых чеков не было"}${sl&&sl.debts&&sl.debts.length?` · долги: ${sl.debts.map(d=>dShort(d.d)+" "+fmt(d.debt)).join(", ")}`:""}</div>
+          <div class="tbl" style="margin-top:8px"><table><thead><tr><th>День</th><th class="r">Billz</th><th class="r">Касса</th><th></th></tr></thead><tbody>${sc.slice(-7).reverse().map(x=>`<tr><td>${dShort(x.d)}</td><td class="r num">${fmt(x.billz)}</td><td class="r num">${fmt(x.kassa)}</td><td>${x.ok?'<span class="up">✓</span>':`<span class="down">≠ ${fmt(x.kassa-x.billz)}</span>`}</td></tr>`).join("")||'<tr><td colspan="4" class="srcs">Продаж за неделю нет</td></tr>'}</tbody></table></div>
+          <p class="note" style="margin-top:6px">В «Кассе» учитываются продажи вместе с отмеченными долгами.</p></div>
+        <div><b>Склад</b><div class="note">${sk?`${fmt(sk.items)} позиций, ${fmt(sk.qty)} шт по Billz`:"—"}${sk&&sk.baseline?" · первый снимок, сверка начнётся со следующей загрузки":sk?` · расхождений: ${sk.diffCount||0}`:""}</div>
+          ${sk&&sk.diffs&&sk.diffs.length?`<div class="tbl" style="margin-top:8px"><table><thead><tr><th>Товар</th><th class="r">Было</th><th class="r">Продано</th><th class="r">Должно</th><th class="r">В Billz</th><th class="r">Разница</th></tr></thead><tbody>${sk.diffs.slice(0,30).map(d=>`<tr><td>${esc(d.n)}<br><span class="srcs">${esc(d.s)}</span></td><td class="r num">${fmt(d.prev)}</td><td class="r num">${fmt(d.sold)}</td><td class="r num">${fmt(d.exp)}</td><td class="r num">${fmt(d.now)}</td><td class="r num"><b class="${d.d>0?"up":"down"}">${d.d>0?"+":""}${fmt(d.d)}</b></td></tr>`).join("")}</tbody></table></div><p class="note" style="margin-top:6px">Плюс — товар пришёл (перемещение, поставка). Минус — ушёл без продажи в Кассе (перемещение, списание, недостача).</p>`:sk&&!sk.baseline?'<p class="note" style="margin-top:8px">Остатки сходятся с продажами ✓</p>':""}</div>
+      </div>`:""}
+      ${att.length?`<div class="bz-st warn" style="margin-top:10px">Требует внимания: ${att.map(esc).join("; ")}</div>`:""}`;
+    const b=$("bzRunBtn");if(b)b.onclick=async()=>{const r=await bzRun();if(r&&r.ok===false)alertMsg("Billz: "+r.error);};
+  }
+  function alertMsg(t){const m=$("sMsg");if(m){m.textContent=t;m.style.color="var(--minus)"}}
   const PLACE_ORDER=["Склад","Премиум","Яшнабад","Сергели","C1"];
   const placesOf=items=>{const s=[...new Set(items.map(i=>i.pt||"Без места"))];return s.sort((a,b)=>(PLACE_ORDER.indexOf(a)+1||99)-(PLACE_ORDER.indexOf(b)+1||99))};
   function renderStockList(){
+    renderBz();
     const all=stockItems(), meta=stockMeta(), has=all.length>0;
     ["sKpis","sPlacesPanel","sCatsPanel","sGroupsPanel","sItemsPanel","sPlaceSeg"].forEach(id=>$(id).hidden=!has);$("sEmpty").hidden=has;
     $("stInfo").textContent=meta?`Склад загружен из «${meta.file||"файла"}»: ${fmt(all.length)} позиций`:"Склад ещё не загружен";
@@ -4392,7 +4446,7 @@ window.SaifXL=(function(){
   document.addEventListener("kassa-updated",()=>{if(tab==="analytics")renderAnalytics()});
   window.__S={get sales(){return sales},get settings(){return settings},get planCfg(){return planCfg},get repDocs(){return repDocs},get batches(){return batches},F,
     plCalc:m=>plCalc(m),plStats:(...a)=>plStats(...a),rpCalc:(m,w)=>rpCalc(m,w),rpGN:d=>rpGN(d),get RP_GN_FROM(){return RP_GN_FROM},rpSave:(d,p)=>rpSave(d,p),putSale:(i,d)=>putSale(i,d),delSale:i=>delSale(i),newId:()=>newId(),
-    lensData:()=>lensData(),lensKind:x=>lensKind(x),marginData:()=>marginData(),batchStats:(...a)=>batchStats(...a),stockItems:()=>stockItems(),stockMeta:()=>stockMeta(),
+    lensData:()=>lensData(),lensKind:x=>lensKind(x),marginData:()=>marginData(),batchStats:(...a)=>batchStats(...a),stockItems:()=>stockItems(),stockMeta:()=>stockMeta(),bzSync:()=>bzSync,bzState:()=>bzState(),bzRun:()=>bzRun(),bzBusy:()=>bzBusy,bzNext:()=>bzNext(),bzTime:ms=>bzTime(ms),
     rpExportAll:btn=>rpExport(rpAllDays(),btn,true)};
   // ---------- фото кассы ----------
   function phMsg(t,bad){const m=$("phMsg");m.textContent=t;m.style.color=bad?"var(--minus)":"var(--plus)";clearTimeout(phMsg._t);phMsg._t=setTimeout(()=>m.textContent="",6000)}
@@ -4672,6 +4726,7 @@ window.SaifXL=(function(){
     db.collection("entries").onSnapshot(s=>{dayExp=docs(s).filter(e=>e.source==="day"&&e.type!=="inc");renderAll()},()=>{});
     db.collection("batches").onSnapshot(s=>{batches=docs(s);matcherCache=null;renderAll()},()=>{});
     db.collection("stock").onSnapshot(s=>{stockParts=docs(s);matcherCache=null;renderAll()},()=>{});
+    db.doc("sync/billz-sergeli").onSnapshot(s=>{bzSync=s.exists?s.data():null;renderBz();setTimeout(()=>document.dispatchEvent(new CustomEvent("sales-updated")),0)},()=>{});
     db.collection("report").onSnapshot(s=>{repDocs={};s.docs.forEach(d=>{repDocs[d.id]=Object.assign({},d.data())});if(tab==="report")renderReport()},()=>{});
     db.collection("cashlog").onSnapshot(s=>{cashlog=docs(s);if(tab==="analytics")renderAnalytics()},()=>{});
     db.doc("settings/sales").onSnapshot(s=>{if(mode!=="db")return;if(s.exists){const d=s.data();if(Array.isArray(d.points)&&d.points.length)settings={points:d.points.slice(),cats:(Array.isArray(d.cats)&&d.cats.length?d.cats:DEF_CATS).slice(),plan:+d.plan||0}}fillSelects();renderAll()},()=>{});
@@ -5175,6 +5230,7 @@ addEventListener("scroll",()=>{if(!t)t=requestAnimationFrame(chk)},{passive:true
     plan:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/>',
     lens:'<circle cx="7" cy="14" r="3.6"/><circle cx="17" cy="14" r="3.6"/><path d="M10.6 14h2.8M3.4 13 5 7.5M20.6 13 19 7.5"/>',
     batch:'<path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 12v9"/>',
+    billz:'<path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.5M20 4v4.5h-4.5M20 12a8 8 0 0 1-13.7 5.6L4 15.5M4 20v-4.5h4.5"/>',
     help:'<circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8 1c0 1.7-2.4 2.1-2.4 3.6M12 17h.01"/>',
     moon:'<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
     full:'<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
@@ -5486,7 +5542,7 @@ addEventListener("scroll",()=>{if(!t)t=requestAnimationFrame(chk)},{passive:true
     const kx=window.__kassa||{};let pct="";try{const P=S().plCalc(today().slice(0,7));if(P.c.total)pct=Math.round(P.fact/P.c.total*100)+"%"}catch(e){}
     const dark=H.getAttribute("data-theme")==="dark"||(!H.getAttribute("data-theme")&&matchMedia("(prefers-color-scheme: dark)").matches);
     const item=(k,n,v,c)=>`<div class="m-it tap" data-sub="${k}"><div class="l" style="display:flex;align-items:center"><span class="m-icb" style="background:${c}">${svg(k,"")}</span>${n}</div><div class="r m-sm" style="font-weight:500">${v||""}<span class="chev">›</span></div></div>`;
-    return top("Ещё")+`<div class="m-card m-list">${item("analytics","Аналитика",mln(agg(sales().filter(s=>(s.date||"").startsWith(today().slice(0,7)))).sum),"#5e5ce6")}${item("plan","План",pct,"#ff9500")}${item("lens","Линзы","","#af52de")}${item("batch","Склад","","#ff2d55")}${item("help","Инструкция","","#8e8e93")}</div>
+    return top("Ещё")+`<div class="m-card m-list">${item("analytics","Аналитика",mln(agg(sales().filter(s=>(s.date||"").startsWith(today().slice(0,7)))).sum),"#5e5ce6")}${item("plan","План",pct,"#ff9500")}${item("lens","Линзы","","#af52de")}${item("batch","Склад","","#ff2d55")}${(()=>{let x=null;try{x=S().bzState()}catch(e){}return item("billz","Billz · Сергели",x?`<span class="m-bzdot ${x.cls}"></span>`:"","#30b0c7")})()}${item("help","Инструкция","","#8e8e93")}</div>
       <div class="m-sec">Вид</div><div class="m-card m-list"><div class="m-it tap" data-act="theme"><div class="l">Тёмная тема</div><span class="m-tog${dark?" on":""}"></span></div>
       <div class="m-it tap" data-act="full"><div class="l">Полная версия сайта<small>как на компьютере</small></div><span class="chev m-sm">›</span></div></div>
       ${window.__sbEmail?`<div class="m-sec">Аккаунт</div><div class="m-card m-list"><div class="m-it"><div class="l" style="overflow:hidden;text-overflow:ellipsis">${esc(window.__sbEmail)}</div></div><div class="m-it tap" data-act="out"><div class="l m-dn">Выйти</div></div></div>`:""}`;
@@ -5596,6 +5652,21 @@ addEventListener("scroll",()=>{if(!t)t=requestAnimationFrame(chk)},{passive:true
       <div class="m-sec">Остатки по местам, шт</div><div class="m-card m-list">${Object.entries(byPt).sort((a,b)=>b[1].q-a[1].q).map(([p,o])=>`<div class="m-it"><div class="l">${p!=="Склад"?`<span class="m-dot" style="background:${pcol(p)}"></span>`:""}${esc(p)}<small>${Object.entries(o.c).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([c,q])=>esc(c.toLowerCase())+" "+fmt(q)).join(" · ")}</small></div><div class="r">${fmt(o.q)}</div></div>`).join("")||`<div class="m-empty">Склад не загружен</div>`}</div>
       <p class="m-sm" style="text-align:center;margin:6px 0">Загрузка склада и партий — в полной версии</p>`;
   }
+  function scrBillz(){
+    const SS=S();let s=null,stt=null,busy=false,next="";try{s=SS.bzSync();stt=SS.bzState();busy=SS.bzBusy();next=SS.bzNext()}catch(e){}
+    const last=s&&(s.ok?s:s.lastOk),T=ms=>{try{return SS.bzTime(ms)}catch(e){return ""}};
+    const sc=(last&&last.salesCheck)||[],sk=last&&last.stock,sl=last&&last.sales,att=(last&&last.attention)||[];
+    return backBtn("Ещё")+top("Billz · Сергели","пн–сб в 17:00 · следующая "+esc(next))+
+      `<div class="m-card"><div class="m-bzst ${stt?stt.cls:"wait"}">${esc(stt?stt.t:"Загрузка…")}</div>
+        <button type="button" class="m-btn pri" data-act="bzrun"${busy?" disabled":""} style="width:100%;margin-top:10px">${busy?"Загружаю…":"Обновить сейчас"}</button></div>
+      ${last?`<div class="m-sec">Продажи</div><div class="m-card m-list"><div class="m-it"><div class="l">Добавлено в последний раз<small>${sl&&sl.debts&&sl.debts.length?"долги: "+sl.debts.map(d=>dShortM(d.d)+" "+fmt(d.debt)).join(", "):"без долгов"}</small></div><div class="r">${sl&&sl.checks?sl.checks+" "+pl(sl.checks,"чек","чека","чеков"):"—"}</div></div>
+        ${sc.slice(-7).reverse().map(x=>`<div class="m-it"><div class="l">${dShortM(x.d)}<small>Billz ${fmt(x.billz)} · Касса ${fmt(x.kassa)}</small></div><div class="r ${x.ok?"m-up":"m-dn"}">${x.ok?"✓":"≠ "+fmt(x.kassa-x.billz)}</div></div>`).join("")}</div>
+      <div class="m-sec">Склад</div><div class="m-card m-list"><div class="m-it"><div class="l">По Billz<small>${sk&&sk.baseline?"первый снимок — сверка со следующей загрузки":"расхождений: "+((sk&&sk.diffCount)||0)}</small></div><div class="r">${sk?fmt(sk.qty)+" шт":"—"}</div></div>
+        ${sk&&sk.diffs?sk.diffs.slice(0,20).map(d=>`<div class="m-it"><div class="l">${esc(d.n)}<small>было ${d.prev} · продано ${d.sold} · в Billz ${d.now}</small></div><div class="r ${d.d>0?"m-up":"m-dn"}">${d.d>0?"+":""}${d.d}</div></div>`).join(""):""}</div>
+      ${att.length?`<div class="m-card"><div class="m-bzst warn">Требует внимания</div><div class="m-sm" style="margin-top:6px">${att.map(esc).join("<br>")}</div></div>`:""}`:""}
+      <p class="m-sm" style="text-align:center;margin:6px 0">Плюс на складе — товар пришёл, минус — ушёл без продажи в Кассе</p>`;
+  }
+  const dShortM=d=>d?d.slice(8,10)+"."+d.slice(5,7):"—";
   function scrHelp(){
     const Q=[["Как внести продажу","На вкладке «Продажи» нажмите «＋» внизу справа или «＋ Продажа» на экране «Сегодня». Выберите точку, впишите товар и сумму, отметьте способ оплаты. Обычно проще прислать фото листа в чат Claude со словом «делай» — продажи появятся сами."],
       ["Как добавить расход","«＋ Расход» на экране «Сегодня» или на вкладке «Касса». Можно нажать на шаблон — название и сумма подставятся. Операционный — мелкие расходы точек, прочий — крупные платежи, приход — деньги, внесённые в кассу."],
@@ -5620,7 +5691,7 @@ addEventListener("scroll",()=>{if(!t)t=requestAnimationFrame(chk)},{passive:true
       else if(st.tab==="kassa")h=scrKassa();
       else if(st.tab==="sales")h=v&&v.day?scrDay(v.day):scrSales();
       else if(st.tab==="report")h=scrReport();
-      else if(st.tab==="more")h=!v?scrMore():v.sub==="analytics"?scrAnalytics():v.sub==="plan"?scrPlan():v.sub==="lens"?scrLens():v.sub==="batch"?scrBatch():scrHelp();
+      else if(st.tab==="more")h=!v?scrMore():v.sub==="analytics"?scrAnalytics():v.sub==="plan"?scrPlan():v.sub==="lens"?scrLens():v.sub==="batch"?scrBatch():v.sub==="billz"?scrBillz():scrHelp();
     }catch(e){console.error(e);h=`<div class="m-empty">Не удалось показать экран. Обновите страницу.</div>`}
     const y=scrollY;scr.innerHTML=h;
     tb.innerHTML=TABS.map(([k,n,ic])=>`<button type="button" data-tab="${k}" class="${st.tab===k?"on":""}">${svg(ic)}<span>${n}</span></button>`).join("");
@@ -5644,6 +5715,7 @@ addEventListener("scroll",()=>{if(!t)t=requestAnimationFrame(chk)},{passive:true
       else if(a==="rpxl"){toast("Готовлю файл…");Promise.resolve().then(()=>S().rpExportAll(el)).then(()=>toast("Готово: файл Excel скачан")).catch(()=>toast("Не удалось собрать файл"))}
       else if(a==="theme"){const sw=document.getElementById("themeSw");if(sw){sw.click()}setTimeout(render,450)}
       else if(a==="full"){H.classList.add("m-full");try{localStorage.setItem("kassa.mfull","1")}catch(err){}scrollTo(0,0)}
+      else if(a==="bzrun"){const SS=S();if(!SS||!SS.bzRun)return;toast("Загружаю из Billz…");setTimeout(render,50);SS.bzRun().then(r=>{toast(r&&r.ok===false?"Billz: ошибка — "+(r.error||""):"Готово: данные из Billz обновлены");render()})}
       else if(a==="out"){window.__sbSignOut&&window.__sbSignOut()}
       return}
     if(el=q("[data-go]")){go(el.dataset.go);return}
