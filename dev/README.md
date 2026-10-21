@@ -1,0 +1,18 @@
+# Исходники «Кассы Оптики»
+
+Сайт `index.html` в корне собирается из этих файлов — правьте исходники, а не `index.html`.
+
+```
+bash dev/build.sh          # собирает ../index.html
+python3 dev/test/t_audit.py  # проверка: ошибки JS, отступы, вылезание за экран (Playwright, тестовые данные)
+```
+
+- `base.html` — основная страница (касса, продажи, отчёт, аналитика, склад…)
+- `patch_mobile.py` + `mobile/` — телефонная версия
+- `patch_billz.py` — блок автозагрузки Сергели из Billz
+- `patch_bz.py` + `bz/` — «Сверка», «Остатки Billz», «Перемещения»
+- `shim.html`, `build.py` — вход и хранилище Supabase
+- `../supabase/functions/` — серверные функции: `billz-sync` (Сергели → Касса), `billz-collect` (чеки, остатки, перемещения всех точек)
+
+Supabase: проект `qvblxhyftwivkzxucfak`. Расписание (pg_cron): выгрузка Billz каждый день в 17:00 по Ташкенту, повторы 17:20 и 19:00.
+Тестовые данные в `test/fakesb_synth.js` — вымышленные.

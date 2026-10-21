@@ -5506,7 +5506,7 @@ addEventListener("scroll",()=>{if(!t)t=requestAnimationFrame(chk)},{passive:true
         $("stBzList").querySelectorAll("tr[data-pt]").forEach(tr=>tr.onclick=()=>{ST.pt=tr.dataset.pt;ls.set("sPt",ST.pt);renderStock()});
         lastStock={L:it,D};
       }
-      el.innerHTML='<div id="stBzList"></div>';draw();
+      el.innerHTML='<div id="stBzList" class="stack"></div>';draw();
     }).catch(e=>{el.innerHTML=`<div class="empty">Не удалось загрузить остатки: ${esc(e.message||e)}</div>`});
   }
   let lastStock=null,lastTr=null;

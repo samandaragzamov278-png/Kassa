@@ -1,0 +1,134 @@
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+#sbGate{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;padding:16px;background:var(--bg,#f6f4f9);font-family:"Golos Text",system-ui,sans-serif}
+#sbGate[hidden]{display:none}
+#sbGate .gc{width:100%;max-width:380px;background:var(--surface,#fff);border:1px solid var(--line,#e4dfec);border-radius:22px;padding:26px 22px 22px;box-shadow:0 18px 50px rgba(40,20,80,.12)}
+#sbGate h1{margin:0 0 4px;font:600 22px/1.2 Montserrat,"Golos Text",sans-serif;color:var(--ink,#1f1a2b)}
+#sbGate p{margin:0 0 18px;color:var(--muted,#6c6580);font-size:14px;line-height:1.45}
+#sbGate label{display:block;font-size:13px;color:var(--muted,#6c6580);margin:12px 0 6px}
+#sbGate input{width:100%;box-sizing:border-box;height:44px;border-radius:12px;border:1px solid var(--line,#e4dfec);background:var(--bg,#f6f4f9);color:var(--ink,#1f1a2b);padding:0 14px;font:inherit;font-size:16px}
+#sbGate input:focus{outline:2px solid var(--accent,#6b3fa0);outline-offset:1px}
+#sbGate button{width:100%;height:46px;margin-top:18px;border:0;border-radius:12px;background:var(--accent,#6b3fa0);color:#fff;font:600 15px "Golos Text",sans-serif;cursor:pointer}
+#sbGate button:disabled{opacity:.6;cursor:default}
+#sbGate .lnk{display:block;margin:14px auto 0;background:none;color:var(--accent,#6b3fa0);height:auto;width:auto;font-weight:500;font-size:14px;padding:4px}
+#sbGate .msg{min-height:20px;margin-top:12px;font-size:13.5px;line-height:1.4;color:var(--muted,#6c6580)}
+#sbGate .msg.err{color:var(--minus,#b3322e)}
+#sbUser{position:fixed;right:12px;bottom:12px;z-index:9000;display:flex;gap:8px;align-items:center;padding:6px 6px 6px 12px;border-radius:999px;background:var(--surface,#fff);border:1px solid var(--line,#e4dfec);box-shadow:0 6px 20px rgba(40,20,80,.1);font:13px "Golos Text",sans-serif;color:var(--muted,#6c6580)}
+#sbUser[hidden]{display:none}
+#sbUser button{border:0;border-radius:999px;padding:6px 12px;background:var(--accent-soft,#efe8f8);color:var(--accent,#6b3fa0);font:600 12.5px "Golos Text",sans-serif;cursor:pointer}
+#sbUser .dot{width:8px;height:8px;border-radius:50%;background:#34c759}
+#sbUser .dot.off{background:#ff9f0a}
+#sbUser.in-top{position:static;order:2;flex:none;padding:5px 5px 5px 11px;box-shadow:none;background:var(--bar,var(--glass));-webkit-backdrop-filter:blur(var(--blur,22px)) saturate(200%);backdrop-filter:blur(var(--blur,22px)) saturate(200%);border:1px solid var(--glass-brd,var(--line))}
+#sbUser.in-top button{min-height:30px}
+@media (max-width:1439px){#sbUser .em{display:none}}
+/* загрузка файлов на странице была для версии внутри Claude — здесь фото присылаются в чат */
+section:has(#phList){display:none!important}
+</style>
+<div id="sbGate" hidden>
+  <form class="gc" id="sbForm" autocomplete="on">
+    <h1>Касса Оптики</h1>
+    <p id="sbLead">Войдите, чтобы открыть кассу.</p>
+    <label for="sbEmail">Почта</label>
+    <input id="sbEmail" type="email" autocomplete="username" required>
+    <label for="sbPass">Пароль</label>
+    <input id="sbPass" type="password" autocomplete="current-password" minlength="8" required>
+    <button type="submit" id="sbGo">Войти</button>
+    <button type="button" class="lnk" id="sbMode">Первый вход? Создать пароль</button>
+    <div class="msg" id="sbMsg" role="status"></div>
+  </form>
+</div>
+<div id="sbUser" hidden><span class="dot" id="sbDot"></span><span class="em" id="sbEm"></span><button type="button" id="sbOut">Выйти</button></div>
+<script>
+/* Хранилище Supabase вместо хранилища Claude: тот же интерфейс db.collection/doc */
+(function(){
+  const SB_URL="__SB_URL__", SB_KEY="__SB_KEY__";
+  const $=id=>document.getElementById(id);
+  const IMPORT=location.hash==="#import";
+  const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+  window.__sb=sb;
+  const cache=new Map();            // col -> Map(id -> data)
+  const colSubs=new Map();          // col -> Set(fn)
+  const docSubs=new Map();          // "col/id" -> Set(fn)
+  let loaded=false, readyRes, signedUp=false;
+  const ready=new Promise(r=>readyRes=r);
+  const clone=o=>o==null?o:JSON.parse(JSON.stringify(o));
+  const colOf=c=>{if(!cache.has(c))cache.set(c,new Map());return cache.get(c)};
+  function colSnap(c){const m=colOf(c);const docs=[...m.entries()].map(([id,d])=>({id,exists:true,data:()=>clone(d)}));return {docs,size:docs.length,empty:!docs.length,forEach:f=>docs.forEach(f)}}
+  function docSnap(c,id){const d=colOf(c).get(id);return {id,exists:d!==undefined,data:()=>d===undefined?undefined:clone(d)}}
+  const pend=new Set();let pendT=0;
+  function flush(){pendT=0;const ks=[...pend];pend.clear();const cols=new Set();
+    ks.forEach(k=>{const i=k.indexOf("/");cols.add(k.slice(0,i));const t=docSubs.get(k);if(t)t.forEach(f=>{try{f(docSnap(k.slice(0,i),k.slice(i+1)))}catch(e){console.error(e)}})});
+    cols.forEach(c=>{const s=colSubs.get(c);if(s)s.forEach(f=>{try{f(colSnap(c))}catch(e){console.error(e)}})})}
+  function emit(c,id){pend.add(c+"/"+id);if(!pendT)pendT=setTimeout(flush,40)}
+  function emitAll(){for(const [c,s] of colSubs)s.forEach(f=>{try{f(colSnap(c))}catch(e){}});for(const [k,s] of docSubs){const i=k.indexOf("/");s.forEach(f=>{try{f(docSnap(k.slice(0,i),k.slice(i+1)))}catch(e){}})}}
+  const split=p=>{const i=p.indexOf("/");if(i<1||p.indexOf("/",i+1)>=0)throw Object.assign(new Error("bad path "+p),{code:"invalid_argument"});return [p.slice(0,i),p.slice(i+1)]};
+  const fail=(e)=>{const x=new Error(e&&e.message||"Ошибка хранилища");x.code=(e&&e.code==="42501")?"not_granted":"unavailable";return x};
+  async function loadAll(){
+    const all=[];let from=0;const N=1000;
+    for(;;){const {data,error}=await sb.from("docs").select("col,id,data").order("col").order("id").range(from,from+N-1);if(error)throw error;all.push(...data);if(data.length<N)break;from+=N}
+    cache.clear();all.forEach(r=>colOf(r.col).set(r.id,r.data));loaded=true;
+  }
+  let chan=null;
+  function live(){
+    if(chan)sb.removeChannel(chan);
+    chan=sb.channel("docs-live").on("postgres_changes",{event:"*",schema:"public",table:"docs"},p=>{
+      const n=p.new&&p.new.col?p.new:null,o=p.old&&p.old.col?p.old:null;
+      if(p.eventType==="DELETE"&&o){colOf(o.col).delete(o.id);emit(o.col,o.id)}
+      else if(n){colOf(n.col).set(n.id,n.data);emit(n.col,n.id)}
+    }).subscribe(st=>{const d=$("sbDot");if(d)d.classList.toggle("off",st!=="SUBSCRIBED");if(st==="SUBSCRIBED"&&loaded){loadAll().then(emitAll).catch(()=>{})}});
+  }
+  const db={
+    collection(c){return {
+      onSnapshot(cb,err){let s=colSubs.get(c);if(!s)colSubs.set(c,s=new Set());s.add(cb);if(loaded)setTimeout(()=>cb(colSnap(c)),0);return ()=>s.delete(cb)},
+      doc(id){return db.doc(c+"/"+id)},
+      async get(){return colSnap(c)}
+    }},
+    doc(path){const [c,id]=split(path);return {
+      id,
+      onSnapshot(cb,err){const k=c+"/"+id;let s=docSubs.get(k);if(!s)docSubs.set(k,s=new Set());s.add(cb);if(loaded)setTimeout(()=>cb(docSnap(c,id)),0);return ()=>s.delete(cb)},
+      async get(){return docSnap(c,id)},
+      async set(data){const d=clone(data)||{};const {error}=await sb.from("docs").upsert({col:c,id,data:d});if(error)throw fail(error);colOf(c).set(id,d);emit(c,id)},
+      async update(patch){const cur=colOf(c).get(id);if(cur===undefined)throw Object.assign(new Error("not found"),{code:"not_found"});const d=Object.assign(clone(cur),clone(patch));const {error}=await sb.from("docs").update({data:d}).eq("col",c).eq("id",id);if(error)throw fail(error);colOf(c).set(id,d);emit(c,id)},
+      async delete(){const {error}=await sb.from("docs").delete().eq("col",c).eq("id",id);if(error)throw fail(error);colOf(c).delete(id);emit(c,id)}
+    }}
+  };
+  const downloads={async save({filename,data}){const b=data instanceof Blob?data:new Blob([data],{type:"text/plain;charset=utf-8"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=filename||"file";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);return {status:"saved"}}};
+  window.claude={use:async name=>{if(name==="db"){await ready;return db}if(name==="downloads")return downloads;return null}};
+
+  // ---------- вход ----------
+  const gate=$("sbGate"),msg=(t,e)=>{$("sbMsg").textContent=t||"";$("sbMsg").classList.toggle("err",!!e)};
+  let mode="in";
+  $("sbMode").onclick=()=>{mode=mode==="in"?"up":"in";$("sbGo").textContent=mode==="in"?"Войти":"Создать пароль";$("sbMode").textContent=mode==="in"?"Первый вход? Создать пароль":"Уже есть пароль? Войти";$("sbPass").autocomplete=mode==="in"?"current-password":"new-password";msg("")};
+  $("sbForm").onsubmit=async e=>{e.preventDefault();const email=$("sbEmail").value.trim(),password=$("sbPass").value;$("sbGo").disabled=true;msg(mode==="in"?"Вхожу…":"Создаю…");
+    try{
+      if(mode==="up"){const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}});if(error)throw error;if(!data.session){msg("Письмо для подтверждения отправлено на "+email+". Откройте его, затем войдите здесь с этим паролем.");$("sbMode").click();msg("Письмо для подтверждения отправлено на "+email+". Откройте его, затем войдите здесь с этим паролем.");return}}
+      else{const {error}=await sb.auth.signInWithPassword({email,password});if(error)throw error}
+    }catch(err){const m=String(err&&err.message||"");msg(/Invalid login/i.test(m)?"Неверная почта или пароль.":/not confirmed/i.test(m)?"Почта ещё не подтверждена — откройте письмо от Supabase.":/already registered/i.test(m)?"Эта почта уже зарегистрирована — войдите.":/Password should/i.test(m)?"Пароль слишком короткий: нужно минимум 8 символов.":"Не получилось: "+m,true)}
+    finally{$("sbGo").disabled=false}};
+  $("sbOut").onclick=async()=>{await sb.auth.signOut();location.reload()};
+  let started=false;
+  async function start(session){
+    if(started)return;
+    const email=session.user.email||"";
+    const {data:mem,error}=await sb.from("members").select("email").limit(1);
+    if(error||!mem||!mem.length){gate.hidden=false;$("sbLead").textContent="У "+email+" нет доступа к кассе. Попросите владельца добавить эту почту.";$("sbForm").querySelectorAll("label,input,#sbGo,#sbMode").forEach(x=>x.hidden=true);msg("");const b=document.createElement("button");b.type="button";b.textContent="Выйти";b.onclick=()=>$("sbOut").click();$("sbForm").appendChild(b);return}
+    started=true;gate.hidden=true;$("sbUser").hidden=false;{const mv=()=>{const tb=document.querySelector(".topbar");if(tb){tb.appendChild($("sbUser"));$("sbUser").classList.add("in-top")}};if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",mv);else mv()}$("sbEm").textContent=email;window.__sbEmail=email;window.__sbSignOut=()=>$("sbOut").click();
+    try{await loadAll()}catch(e){console.error(e)}
+    live();readyRes();emitAll();
+    if(IMPORT)importUI();
+  }
+  // разовый перенос данных из файла выгрузки (откройте страницу с #import)
+  function importUI(){
+    const box=document.createElement("div");box.style.cssText="position:fixed;left:12px;bottom:12px;z-index:9001;max-width:340px;padding:14px;border-radius:16px;background:var(--surface,#fff);border:1px solid var(--line,#e4dfec);box-shadow:0 10px 30px rgba(40,20,80,.15);font:14px 'Golos Text',sans-serif;color:var(--ink,#1f1a2b)";
+    box.innerHTML='<b>Перенос данных</b><div style="margin:6px 0 10px;color:var(--muted,#6c6580)">Выберите файл выгрузки kassa-data.json</div><input type="file" id="sbImpFile" accept=".json,application/json"><div class="im" style="margin-top:8px;color:var(--muted,#6c6580)"></div>';
+    document.body.appendChild(box);const im=box.querySelector(".im");
+    box.querySelector("input").onchange=async ev=>{const f=ev.target.files[0];if(!f)return;
+      try{const rows=JSON.parse(await f.text());if(!Array.isArray(rows))throw new Error("формат");
+        let done=0;for(let i=0;i<rows.length;i+=150){const part=rows.slice(i,i+150).map(r=>({col:r.c,id:r.i,data:r.d}));const {error}=await sb.from("docs").upsert(part);if(error)throw error;done+=part.length;im.textContent="Загружено "+done+" из "+rows.length}
+        im.textContent="Готово: перенесено "+done+" записей. Обновляю…";await loadAll();emitAll();setTimeout(()=>box.remove(),2500);
+      }catch(e){im.textContent="Ошибка: "+(e.message||e);im.style.color="var(--minus,#b3322e)"}};
+  }
+  sb.auth.onAuthStateChange((ev,session)=>{if(session)setTimeout(()=>start(session),0);else if(ev==="SIGNED_OUT"){started=false}});
+  sb.auth.getSession().then(({data})=>{if(data.session)start(data.session);else gate.hidden=false});
+})();
+</script>

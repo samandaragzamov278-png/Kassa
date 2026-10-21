@@ -1,0 +1,33 @@
+
+/* ===== Billz: сверка, остатки, перемещения ===== */
+[hidden]{display:none!important}
+.bz-state{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.bz-state .bz-ref{margin-left:auto}
+.bz-pill{display:inline-block;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600}
+.bz-pill.ok{background:var(--plus-soft);color:var(--plus)}
+.bz-pill.err{background:var(--minus-soft);color:var(--minus)}
+.bz-pill.wait{background:var(--wash);color:var(--muted)}
+.bz-chk{display:inline-flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;user-select:none}
+.bz-chk input{width:18px;height:18px;accent-color:var(--accent)}
+#reconCtl .fb-row+.fb-row,#stBzCtl .fb-row+.fb-row,#stTrCtl .fb-row+.fb-row{margin-top:10px}
+#reconCtl .fb-row,#stBzCtl .fb-row,#stTrCtl .fb-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+#reconCtl .fb-dates,#stTrCtl .fb-dates{display:flex;gap:10px}
+#reconCtl .fb-dates[hidden],#stTrCtl .fb-dates[hidden]{display:none}
+tr.tap{cursor:pointer}
+tr.bz-bad>td{background:color-mix(in srgb,var(--minus) 9%,transparent)}
+tr.bz-warn>td{background:color-mix(in srgb,#ff9500 11%,transparent)}
+tr.bz-sel>td{box-shadow:inset 0 -2px 0 var(--accent)}
+tr.bz-ret>td{color:var(--minus)}
+tr.bz-det>td{background:var(--wash);padding:14px!important}
+.bz-flag{display:inline-block;background:var(--minus);color:#fff;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:700;white-space:nowrap}
+.bz-flag.w{background:#ff9500}
+.bz-tag{display:inline-block;font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent);vertical-align:middle}
+.kpi.bz-kbad .v{color:var(--minus)}
+.kpi.bz-kwarn .v{color:#ff9500}
+.bz-detw{display:grid;grid-template-columns:1.3fr 1fr;gap:16px}
+.bz-detw h3{font-size:15px;margin:0 0 8px}
+@media (max-width:1100px){.bz-detw{grid-template-columns:1fr}}
+.bz-toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;z-index:9999;transition:all .25s;box-shadow:0 8px 30px rgba(0,0,0,.2)}
+.bz-toast.on{opacity:1;transform:translate(-50%,0)}
+.bz-toast.bad{background:var(--minus);color:#fff}
+#page-recon #bzPanel{margin-top:14px}
