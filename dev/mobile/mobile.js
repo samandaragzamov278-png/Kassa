@@ -83,7 +83,7 @@
   document.body.insertAdjacentHTML("beforeend",`<button type="button" id="mBack">${svg("back","m-ic")}<span>Мобильная версия</span></button>`);
   document.getElementById("mBack").onclick=()=>{H.classList.remove("m-full");try{localStorage.removeItem("kassa.mfull")}catch(e){}scrollTo(0,0);render()};
   const scr=document.getElementById("mScr"),fab=document.getElementById("mFab"),tb=document.getElementById("mTb");
-  const TABS=[["today","Сегодня","home"],["kassa","Касса","kassa"],["sales","Продажи","sales"],["report","Отчёт","report"],["more","Ещё","more"]];
+  const TABS=[["today","Сегодня","home"],["kassa","Касса","kassa"],["sales","Продажи","sales"],["report","Р/с","report"],["more","Ещё","more"]];
   function go(tab){st.tab=tab;st.stack=[];try{sessionStorage.setItem("m.tab",tab)}catch(e){}scrollTo(0,0);render()}
   function push(v){st.stack.push(v);scrollTo(0,0);render()}
   function pop(){st.stack.pop();scrollTo(0,0);render()}
@@ -325,6 +325,15 @@
       `<div class="m-row" style="margin:4px 4px 8px"><span class="m-sec" style="margin:0">${esc(st.dPt)} · ${pa.nc} ${pl(pa.nc,"чек","чека","чеков")}</span><b class="num">${fmt(pa.sum)}</b></div>
       <div class="m-card m-list">${pl2.map(s=>`<div class="m-it tap" data-sale="${esc(s.id)}"><div class="l">${esc(s.product||"—")}<small>${esc(s.cat||"")}${s.qty>1?" · "+s.qty+" шт":""} · ${esc(s.pay==="QR/Payme"?"QR":s.pay||"")}${s.check?" · чек "+esc(s.check):""}${s.note?" · "+esc(s.note):""}</small></div><div class="r">${fmt(s.sum)}</div></div>`).join("")||`<div class="m-empty">Нет продаж</div>`}</div>`;
   }
+  function rsBlock(m){
+    const RS=window.__RS;if(!RS)return "";const C=RS.calc(m);if(!C.days.length)return `<div class="m-card"><div class="m-sm">Выписок по счёту за месяц ещё нет</div></div>`;
+    const cats=Object.entries(C.cat).sort((a,b)=>b[1]-a[1]);
+    const L=C.days.slice().reverse().slice(0,st.rsAll?99:7);
+    return `<div class="m-card m-hero"><div class="m-lb">Остаток на ${C.endD?C.endD.slice(8)+"."+C.endD.slice(5,7):"—"}</div><div class="m-mid">${C.end!=null?fmt(C.end):"—"}</div><div class="m-sm">на ${C.startD?C.startD.slice(8)+"."+C.startD.slice(5,7):"начало"} было ${C.start!=null?fmt(C.start):"—"}</div></div>
+      <div class="m-g2"><div class="m-card"><div class="m-lb">Поступило</div><div class="m-mid m-up">+${short(C.in)}</div></div><div class="m-card"><div class="m-lb">Списано</div><div class="m-mid m-dn">−${short(C.out)}</div></div></div>
+      ${cats.length?`<div class="m-sec">Расходы по статьям</div><div class="m-card m-list">${cats.map(([c,v])=>`<div class="m-it"><div class="l">${esc(c)}</div><div class="r">${short(v)}</div></div>`).join("")}</div>`:""}
+      <div class="m-sec">По дням</div><div class="m-card m-list">${L.map(x=>`<div class="m-it tap" data-rd="${x.d}"><div class="l">${x.d.slice(8)}.${x.d.slice(5,7)}<small>${esc(x.bank.slice(0,2).map(b=>b.n).join(", "))||"без списаний"}</small></div><div class="r">${x.out?`<span class="m-dn">−${short(x.out)}</span>`:""}<small>${x.in>0.5?"+"+short(x.in):""}${x.e!=null?" · "+short(x.e):""}</small></div></div>`).join("")}${C.days.length>7&&!st.rsAll?`<div class="m-it tap" data-act="rsall"><div class="l m-acc">Показать все дни</div></div>`:""}</div>`;
+  }
   function scrReport(){
     const SS=S();if(!SS||!SS.rpCalc)return top("Отчёт")+`<div class="m-empty">Загрузка…</div>`;
     const t=today(),ms=[...new Set(sales().map(s=>(s.date||"").slice(0,7)).filter(Boolean).concat(Object.keys(SS.repDocs||{}).map(d=>d.slice(0,7))))].filter(m=>m<=t.slice(0,7)).sort();
@@ -336,9 +345,9 @@
     const ready=rows.filter(x=>x.r&&x.r.rsEnd!=null&&x.r.grossCash!=null).length;
     const gn=SS.rpGN&&st.rD>=SS.RP_GN_FROM?SS.rpGN(st.rD):r.grossNon;
     const ps=R.pts.filter(p=>row.pts[p]&&(row.pts[p].sum||row.cum.pts[p]));
-    return top("Отчёт",`${MN[+st.rM.slice(5,7)-1]} · заполнено ${ready} из ${rows.length}`)+
-      (ms.length>1?segH("rm",ms.slice(-3).map(m=>[m,MN[+m.slice(5,7)-1]]),st.rM):"")+
-      `<div class="m-chips" id="rpDaysM">${rows.map(x=>`<button type="button" class="m-chip${x.d===st.rD?" on":""}" data-rd="${x.d}">${dWd(x.d)} ${+x.d.slice(8)}${x.r&&x.r.rsEnd!=null?"":" ·"}</button>`).join("")}</div>
+    return top("Отчёт по р/с",`${MN[+st.rM.slice(5,7)-1]} · расчётный счёт`)+
+      (ms.length>1?segH("rm",ms.slice(-3).map(m=>[m,MN[+m.slice(5,7)-1]]),st.rM):"")+rsBlock(st.rM)+
+      `<div class="m-sec">Выписка и отчёт за день · заполнено ${ready} из ${rows.length}</div><div class="m-chips" id="rpDaysM">${rows.map(x=>`<button type="button" class="m-chip${x.d===st.rD?" on":""}" data-rd="${x.d}">${dWd(x.d)} ${+x.d.slice(8)}${x.r&&x.r.rsEnd!=null?"":" ·"}</button>`).join("")}</div>
       <div class="m-g2"><div class="m-card m-hero"><div class="m-lb">Выручка ${st.rD.slice(8)}.${st.rD.slice(5,7)}</div><div class="m-mid">${fmt(row.tot.sum)}</div></div>
         <div class="m-card"><div class="m-lb">С начала мес.</div><div class="m-mid">${mln(row.cum.sum)}</div></div>
         <div class="m-card"><div class="m-lb">Р/с на конец</div><div class="m-mid" style="font-size:18px">${r.rsEnd!=null?fmt(r.rsEnd):"—"}</div><div class="m-sm">${r.rsStart!=null?"на начало "+fmt(r.rsStart):"не заполнено"}</div></div>
@@ -580,7 +589,7 @@
     if(el=q("[data-act]")){const a=el.dataset.act;
       if(a==="sale")sheetSale();else if(a==="exp")sheetExpense();else if(a==="cash")sheetCash();
       else if(a==="calp"||a==="caln"){const d=pd((st.cM||today().slice(0,7))+"-01");d.setMonth(d.getMonth()+(a==="caln"?1:-1));st.cM=iso(d).slice(0,7);render()}
-      else if(a==="kall"){st.kAll=1;render()}else if(a==="sall"){st.sAll=1;render()}
+      else if(a==="kall"){st.kAll=1;render()}else if(a==="rsall"){st.rsAll=1;render()}else if(a==="sall"){st.sAll=1;render()}
       else if(a==="rpedit"){const R=S().rpCalc(st.rM,true).rows.find(x=>x.d===st.rD);sheetReport(st.rD,R&&R.r)}
       else if(a==="rpxl"){toast("Готовлю файл…");Promise.resolve().then(()=>S().rpExportAll(el)).then(()=>toast("Готово: файл Excel скачан")).catch(()=>toast("Не удалось собрать файл"))}
       else if(a==="theme"){const sw=document.getElementById("themeSw");if(sw){sw.click()}setTimeout(render,450)}

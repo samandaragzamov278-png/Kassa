@@ -11,6 +11,7 @@ python3 dev/test/t_audit.py  # проверка: ошибки JS, отступы
 - `patch_mobile.py` + `mobile/` — телефонная версия
 - `patch_billz.py` — блок автозагрузки Сергели из Billz
 - `patch_bz.py` + `bz/` — «Сверка», «Остатки Billz», «Перемещения»
+- `patch_rs.py` + `rs/` — «Отчёт по расчётному счёту» (вкладка «Отчёт р/с»)
 - `shim.html`, `build.py` — вход и хранилище Supabase
 - `../supabase/functions/` — серверные функции: `billz-sync` (Сергели → Касса), `billz-collect` (чеки, остатки, перемещения всех точек)
 
