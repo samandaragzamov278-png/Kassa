@@ -13,3 +13,9 @@ tr.rs-det>td{background:var(--wash);padding:14px!important}
 #rsOld .rs-oldh{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 #rsOldBody{margin-top:16px}
 #rsSeg{margin-bottom:14px}
+.rs-tg{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.rs-tg svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .25s}
+.rs-tg[aria-expanded="true"] svg{transform:rotate(180deg)}
+#rsOld .rs-oldh h2{margin:0}
+#rsOldBody>.head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+#rsOldBody{display:flex;flex-direction:column;gap:16px}

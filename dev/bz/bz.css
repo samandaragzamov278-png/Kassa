@@ -31,3 +31,4 @@ tr.bz-det>td{background:var(--wash);padding:14px!important}
 .bz-toast.on{opacity:1;transform:translate(-50%,0)}
 .bz-toast.bad{background:var(--minus);color:#fff}
 #page-recon #bzPanel{margin-top:14px}
+.bz-tgl{align-self:center;padding:6px 0}

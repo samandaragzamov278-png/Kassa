@@ -796,7 +796,7 @@ input,select{background-color:var(--field)}
 #articles .art-more{display:none}
 #articles.all .art-more{display:block;animation:iosOpen .3s cubic-bezier(.22,1,.36,1) both}
 .art-tg{display:flex;align-items:center;gap:6px;margin:10px auto 0;border:0;background:var(--accent-soft);color:var(--accent);font-weight:600;font-size:13px;border-radius:999px;padding:7px 14px;cursor:pointer}
-.art-tg i{font-style:normal;transition:transform .3s}
+.art-tg i{font-style:normal;transition:transform .3s;display:inline-flex}
 .art-tg .c,#articles.all .art-tg .o{display:none}
 #articles.all .art-tg .c{display:inline}
 #articles.all .art-tg i{transform:rotate(180deg)}
@@ -1575,6 +1575,7 @@ tr.bz-det>td{background:var(--wash);padding:14px!important}
 .bz-toast.on{opacity:1;transform:translate(-50%,0)}
 .bz-toast.bad{background:var(--minus);color:#fff}
 #page-recon #bzPanel{margin-top:14px}
+.bz-tgl{align-self:center;padding:6px 0}
 
 /* ===== Отчёт по расчётному счёту ===== */
 .rs-chart svg .rs-in{fill:var(--plus);opacity:.78}
@@ -1590,6 +1591,12 @@ tr.rs-det>td{background:var(--wash);padding:14px!important}
 #rsOld .rs-oldh{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 #rsOldBody{margin-top:16px}
 #rsSeg{margin-bottom:14px}
+.rs-tg{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.rs-tg svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .25s}
+.rs-tg[aria-expanded="true"] svg{transform:rotate(180deg)}
+#rsOld .rs-oldh h2{margin:0}
+#rsOldBody>.head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+#rsOldBody{display:flex;flex-direction:column;gap:16px}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
@@ -1867,7 +1874,7 @@ window.__zw=function(){return innerWidth/(window.__uiZ||1)};window.__zh=function
       <div class="actions">
         <button type="submit" id="fSubmit">Добавить</button>
         <button type="button" class="sec" id="fCancel" hidden>Отменить правку</button>
-        <label class="chk"><input type="checkbox" id="fSaveTpl"> сохранить как шаблон</label>
+        <label class="tgl"><input type="checkbox" role="switch" id="fSaveTpl"><span class="tg" aria-hidden="true"></span><span>сохранить как шаблон</span></label>
         <span class="msg" id="formMsg" role="status"></span>
       </div>
     </form>
@@ -1936,7 +1943,7 @@ window.__zw=function(){return innerWidth/(window.__uiZ||1)};window.__zh=function
     <div class="seg big" role="group" aria-label="Месяц" id="rsSeg"></div>
     <div id="rsBody" class="stack"></div>
     <section class="panel" id="rsOld" style="margin-top:16px">
-      <div class="rs-oldh"><div><h2>Выписка за день и ежедневный отчёт оптика</h2><p class="note">Ввод остатков и расходов по р/с, выручка по точкам, гросс нал/безнал, расходы с Б/Ч и Excel «Отчёт оптика»</p></div><button type="button" class="sec" id="rsOldTg" aria-expanded="false">Развернуть ⌄</button></div>
+      <div class="rs-oldh"><div><h2>Выписка за день и ежедневный отчёт оптика</h2><p class="note">Ввод остатков и расходов по р/с, выручка по точкам, гросс нал/безнал, расходы с Б/Ч и Excel «Отчёт оптика»</p></div><button type="button" class="sec rs-tg" id="rsOldTg" aria-expanded="false"><span>Развернуть</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button></div>
       <div id="rsOldBody" hidden>
       <div class="head" style="margin:0 0 12px;align-items:flex-start"><p id="rpPeriod" class="note"></p><div class="rp-dlbox" id="rpDlBox">
         <div class="rp-dlrow">
@@ -1945,7 +1952,7 @@ window.__zw=function(){return innerWidth/(window.__uiZ||1)};window.__zh=function
         </div>
         <span class="rp-dlsub" id="rpDlSub"></span>
         <span class="msg" id="rpMsg" role="status"></span>
-      </div>
+      </div></div>
     <section class="panel rp-pickp" id="rpPick" hidden>
       <div class="rp-ph"><div><h2>Какие дни выгрузить</h2><p class="note">Нажимайте на дни, чтобы включить или убрать их из файла. «С начала месяца» и «за месяц» в файле всё равно считаются по всем дням месяца.</p></div><button type="button" class="rp-close" id="rpPickClose" aria-label="Закрыть">×</button></div>
       <div id="rpPickBody"></div>
@@ -2702,7 +2709,7 @@ window.SaifXL=(function(){
     const arts=Object.entries(map).sort((a,b)=>b[1].v-a[1].v);
     const max=arts.length?arts[0][1].v:1, sSmall=small.reduce((a,e)=>a+val(e),0);
     $("articles").innerHTML=arts.length?arts.map(([k,o],i)=>`<div class="hb${i>=6?" art-more":""}"><span class="name">${esc(k)} <span class="srcs">· ${o.n} раз</span></span><span class="val num">${fmt(o.v)}</span><div class="track"><span style="width:${o.v/max*100}%;background:var(--${o.cat==="op"?"op":"oth"})"></span></div></div>`).join("")+
-      (arts.length>6?`<button type="button" class="art-tg" aria-expanded="false"><span class="o">Показать все статьи · ${arts.length}</span><span class="c">Свернуть статьи</span><i>⌄</i></button>`:"")+`<div class="kv" style="border-top:1px solid var(--line);margin-top:14px;padding-top:8px"><b>Итого с Б/Ч</b><b class="num">${fmt(sSmall)}</b></div>`+(()=>{const bp={},bd={};small.forEach(e=>{const b=e.branch&&e.branch!=="Общее"?e.branch:"Общее";bp[b]=(bp[b]||0)+val(e);if(e.date)bd[e.date]=(bd[e.date]||0)+val(e)});const pe=Object.entries(bp).sort((a,b)=>b[1]-a[1]),de=Object.entries(bd).sort((a,b)=>b[1]-a[1]),nd=Object.keys(bd).length;
+      (arts.length>6?`<button type="button" class="art-tg" aria-expanded="false"><span class="o">Показать все статьи · ${arts.length}</span><span class="c">Свернуть статьи</span><i><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></i></button>`:"")+`<div class="kv" style="border-top:1px solid var(--line);margin-top:14px;padding-top:8px"><b>Итого с Б/Ч</b><b class="num">${fmt(sSmall)}</b></div>`+(()=>{const bp={},bd={};small.forEach(e=>{const b=e.branch&&e.branch!=="Общее"?e.branch:"Общее";bp[b]=(bp[b]||0)+val(e);if(e.date)bd[e.date]=(bd[e.date]||0)+val(e)});const pe=Object.entries(bp).sort((a,b)=>b[1]-a[1]),de=Object.entries(bd).sort((a,b)=>b[1]-a[1]),nd=Object.keys(bd).length;
         return `<h3 style="margin-top:16px">По точкам</h3>`+pe.map(([k,v])=>`<div class="kv"><span>${esc(k)}</span><span class="num">${fmt(v)} · ${Math.round(v/(sSmall||1)*100)}%</span></div>`).join("")+
         (de.length?`<h3 style="margin-top:14px">По дням</h3><div class="kv"><span>Самый затратный день</span><span class="num">${dShort(de[0][0])} · ${fmt(de[0][1])}</span></div><div class="kv"><span>В среднем за день с расходами</span><span class="num">${fmt(sSmall/(nd||1))}</span></div><div class="kv"><span>Дней с расходами</span><span class="num">${nd}</span></div>`:"")})():`<div class="empty">Нет мелких расходов</div>`;
 
@@ -5112,7 +5119,7 @@ window.SaifXL=(function(){
 (function(){
   const KEY="kassa.collapsed";let st={};try{st=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){}
   const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
-  const SKIP="#addPanel,#saleFormPanel,#sImport,#bImport,#rpPick,.filterbar,.hx-sec,.kpi";
+  const SKIP="#rsOld,#addPanel,#saleFormPanel,#sImport,#bImport,#rpPick,.filterbar,.hx-sec,.kpi";
   const ICON='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg>';
   function keyOf(p){const h=p.querySelector(".cl-t")||p.querySelector("h2");const pg=p.closest("[id^=page-]");return (pg?pg.id:"")+"|"+(h?h.textContent.trim().slice(0,80):"")}
   function deco(p){
@@ -5393,7 +5400,7 @@ addEventListener("scroll",()=>{if(!t)t=requestAnimationFrame(chk)},{passive:true
     const el=$("reconBody");if(!el)return;
     const [f,t]=periodOf(R.per,R.f,R.t);R.f=f;R.t=t;
     $("reconCtl").innerHTML=`<div class="fb-row">${seg("rPer",PER,R.per)}<div class="fb-dates"${R.per==="custom"?"":" hidden"}><label class="f">С<input type="date" id="rFrom" value="${f}"></label><label class="f">По<input type="date" id="rTo" value="${t}"></label></div></div>
-      <div class="fb-row">${seg("rPt",[["all","Все точки"]].concat(POINTS.map(p=>[p,p])),R.pt)}<label class="bz-chk"><input type="checkbox" id="rOnly"${R.only?" checked":""}> Только расхождения</label></div>`;
+      <div class="fb-row">${seg("rPt",[["all","Все точки"]].concat(POINTS.map(p=>[p,p])),R.pt)}<label class="tgl bz-tgl"><input type="checkbox" role="switch" id="rOnly"${R.only?" checked":""}><span class="tg" aria-hidden="true"></span><span>Только расхождения</span></label></div>`;
     bindSeg("rPer",v=>{R.per=v;ls.set("rPer",v);R.sel=null;renderRecon()});
     bindSeg("rPt",v=>{R.pt=v;ls.set("rPt",v);R.sel=null;renderRecon()});
     $("rOnly").onchange=e=>{R.only=e.target.checked;ls.set("rOnly",R.only);renderRecon()};
@@ -5503,7 +5510,7 @@ addEventListener("scroll",()=>{if(!t)t=requestAnimationFrame(chk)},{passive:true
         <label class="f">Сравнить с<select id="sbzC"><option value="">${D.dates.length>1?"предыдущей выгрузкой":"—"}</option>${D.dates.filter(x=>x.d<D.cur.d).reverse().map(x=>`<option value="${x.d}"${D.cmp&&x.d===D.cmp.d&&ST.cmp?" selected":""}>${dL(x.d)}</option>`).join("")}</select></label>
         <label class="f">Категория<select id="sbzCat"><option value="all">Все</option>${cats.map(c=>`<option${ST.cat===c?" selected":""}>${esc(c)}</option>`).join("")}</select></label>
         <label class="f" style="min-width:200px">Поиск<input id="sbzQ" placeholder="Товар или артикул" value="${esc(ST.qy)}"></label></div>
-        <div class="fb-row">${seg("sbzPt",[["all","Все места"]].concat(PLACES.map(p=>[p,p])),ST.pt)}<label class="bz-chk"><input type="checkbox" id="sbzOnly"${ST.only?" checked":""}> Только с движением или расхождением</label></div>`;
+        <div class="fb-row">${seg("sbzPt",[["all","Все места"]].concat(PLACES.map(p=>[p,p])),ST.pt)}<label class="tgl bz-tgl"><input type="checkbox" role="switch" id="sbzOnly"${ST.only?" checked":""}><span class="tg" aria-hidden="true"></span><span>Только с движением или расхождением</span></label></div>`;
       $("sbzD").onchange=e=>{ST.d=e.target.value;ST.cmp="";renderStock()};$("sbzC").onchange=e=>{ST.cmp=e.target.value;renderStock()};
       $("sbzCat").onchange=e=>{ST.cat=e.target.value;ST.lim=200;draw()};$("sbzQ").oninput=e=>{ST.qy=e.target.value;ST.lim=200;draw()};
       $("sbzOnly").onchange=e=>{ST.only=e.target.checked;draw()};
@@ -5647,12 +5654,12 @@ addEventListener("scroll",()=>{if(!t)t=requestAnimationFrame(chk)},{passive:true
     // по дням
     const L=C.days.slice().reverse();
     h+=`<section class="panel"><h2>Расходы по дням${st.m==="all"?"":" · "+MN[+st.m.slice(5,7)-1].toLowerCase()}</h2><p class="note">Нажмите на день, чтобы увидеть все списания, поменять статью или исправить выписку.</p>
-      <div class="tbl" style="margin-top:10px"><table class="rs-days"><thead><tr><th>День</th><th class="r">Утром</th><th class="r">Поступило</th><th class="r">Списано</th><th>Расходы</th><th class="r">Вечером</th></tr></thead><tbody>${L.map(x=>{const op=st.open===x.d;return `<tr class="tap${op?" rs-sel":""}" data-rsd="${x.d}"><td>${dS(x.d)} <span class="srcs">${WD[new Date(x.d+"T12:00:00Z").getUTCDay()]}</span></td><td class="r num">${x.s!=null?fmt(x.s):"—"}</td><td class="r num">${x.in>0.5?`<span class="up">+${fmt(x.in)}</span>`:'<span class="srcs">—</span>'}</td><td class="r num">${x.out?`<span class="down">−${fmt(x.out)}</span>`:'<span class="srcs">—</span>'}</td><td class="srcs">${esc(x.bank.slice(0,3).map(b=>b.n).join(", "))}${x.bank.length>3?" …":""}</td><td class="r num"><b>${x.e!=null?fmt(x.e):"—"}</b></td></tr>`+(op?`<tr class="rs-det"><td colspan="6">${x.bank.length?`<div class="tbl"><table><thead><tr><th>Расход</th><th>Статья</th><th class="r">Сумма</th></tr></thead><tbody>${x.bank.map((b,i)=>`<tr><td>${esc(b.n)}</td><td><select class="rs-cat" data-rsi="${i}" data-ios="x">${CAT_NAMES.map(c=>`<option${catOf(b)===c?" selected":""}>${esc(c)}</option>`).join("")}</select>${b.c?' <span class="srcs">вручную</span>':""}</td><td class="r num">${fmt(b.a)}</td></tr>`).join("")}</tbody></table></div>`:'<p class="note">Списаний в этот день не было.</p>'}<div style="margin-top:10px"><button type="button" class="sec" data-rsedit="${x.d}">Исправить выписку за ${dS(x.d)}</button></div></td></tr>`:"")}).join("")||'<tr><td colspan="6" class="srcs" style="text-align:center;padding:14px">Нет выписок за период</td></tr>'}</tbody></table></div></section>`;
+      <div class="tbl" style="margin-top:10px"><table class="rs-days"><thead><tr><th>День</th><th class="r">Утром</th><th class="r">Поступило</th><th class="r">Списано</th><th>Расходы</th><th class="r">Вечером</th></tr></thead><tbody>${L.map(x=>{const op=st.open===x.d;return `<tr class="tap${op?" rs-sel":""}" data-rsd="${x.d}"><td>${dS(x.d)} <span class="srcs">${WD[new Date(x.d+"T12:00:00Z").getUTCDay()]}</span></td><td class="r num">${x.s!=null?fmt(x.s):"—"}</td><td class="r num">${x.in>0.5?`<span class="up">+${fmt(x.in)}</span>`:'<span class="srcs">—</span>'}</td><td class="r num">${x.out?`<span class="down">−${fmt(x.out)}</span>`:'<span class="srcs">—</span>'}</td><td class="srcs">${esc(x.bank.slice(0,3).map(b=>b.n).join(", "))}${x.bank.length>3?" …":""}</td><td class="r num"><b>${x.e!=null?fmt(x.e):"—"}</b></td></tr>`+(op?`<tr class="rs-det"><td colspan="6">${x.bank.length?`<div class="tbl"><table><thead><tr><th>Расход</th><th>Статья</th><th class="r">Сумма</th></tr></thead><tbody>${x.bank.map((b,i)=>`<tr><td>${esc(b.n)}</td><td><select class="rs-cat" data-rsi="${i}">${CAT_NAMES.map(c=>`<option${catOf(b)===c?" selected":""}>${esc(c)}</option>`).join("")}</select>${b.c?' <span class="srcs">вручную</span>':""}</td><td class="r num">${fmt(b.a)}</td></tr>`).join("")}</tbody></table></div>`:'<p class="note">Списаний в этот день не было.</p>'}<div style="margin-top:10px"><button type="button" class="sec" data-rsedit="${x.d}">Исправить выписку за ${dS(x.d)}</button></div></td></tr>`:"")}).join("")||'<tr><td colspan="6" class="srcs" style="text-align:center;padding:14px">Нет выписок за период</td></tr>'}</tbody></table></div></section>`;
     el.innerHTML=h;
   }
   // ---------- действия ----------
   function openEditor(day){
-    const b=$("rsOldBody"),t=$("rsOldTg");if(!b)return;b.hidden=false;if(t)t.setAttribute("aria-expanded","true"),t.textContent="Свернуть ⌃";
+    const b=$("rsOldBody"),t=$("rsOldTg");if(!b)return;b.hidden=false;if(t){t.setAttribute("aria-expanded","true");t.querySelector("span").textContent="Свернуть"}
     if(day){const btn=document.querySelector(`#rpDays [data-rd="${day}"]`);if(btn)btn.click()}
     setTimeout(()=>{const p=$("rpRsPanel")||$("rsOld");if(p)p.scrollIntoView({behavior:"smooth",block:"start"})},60);
   }
@@ -5661,7 +5668,7 @@ addEventListener("scroll",()=>{if(!t)t=requestAnimationFrame(chk)},{passive:true
     const d=e.target.closest("tr[data-rsd]");if(d&&!e.target.closest("select")){st.open=st.open===d.dataset.rsd?null:d.dataset.rsd;render();return}
     const ed=e.target.closest("[data-rsedit]");if(ed){openEditor(ed.dataset.rsedit);return}
     if(e.target.closest("#rsAdd")){openEditor(null);return}
-    const tg=e.target.closest("#rsOldTg");if(tg){const b=$("rsOldBody");b.hidden=!b.hidden;tg.setAttribute("aria-expanded",String(!b.hidden));tg.textContent=b.hidden?"Развернуть ⌄":"Свернуть ⌃";return}
+    const tg=e.target.closest("#rsOldTg");if(tg){const b=$("rsOldBody");b.hidden=!b.hidden;tg.setAttribute("aria-expanded",String(!b.hidden));tg.querySelector("span").textContent=b.hidden?"Развернуть":"Свернуть";return}
     if(e.target.closest("#rsXlsx"))xlsx();
   });
   document.addEventListener("change",async e=>{

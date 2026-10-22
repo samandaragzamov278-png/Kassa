@@ -7,5 +7,6 @@ python3 patch_mobile.py /tmp/kassa_work.html
 python3 patch_billz.py /tmp/kassa_work.html
 python3 patch_bz.py /tmp/kassa_work.html
 python3 patch_rs.py /tmp/kassa_work.html
+python3 patch_ui.py /tmp/kassa_work.html
 python3 build.py /tmp/kassa_work.html ../index.html
 echo "index.html собран"

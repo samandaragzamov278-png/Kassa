@@ -11,7 +11,7 @@ def rep(old, new, cnt=1):
 i = h.index('<div class="page" id="page-report" hidden>')
 a = h.index('<header class="head">', i); b = h.index('</header>', a) + len('</header>')
 old_head = h[a:b]
-dl_a = old_head.index('<div class="rp-dlbox" id="rpDlBox">'); dl_b = old_head.rindex('</div>')
+dl_a = old_head.index('<div class="rp-dlbox" id="rpDlBox">'); dl_b = old_head.rindex('</div>') + 6
 dlbox = old_head[dl_a:dl_b]
 NEW = '''<header class="head">
       <div>
@@ -24,13 +24,14 @@ NEW = '''<header class="head">
     <div class="seg big" role="group" aria-label="Месяц" id="rsSeg"></div>
     <div id="rsBody" class="stack"></div>
     <section class="panel" id="rsOld" style="margin-top:16px">
-      <div class="rs-oldh"><div><h2>Выписка за день и ежедневный отчёт оптика</h2><p class="note">Ввод остатков и расходов по р/с, выручка по точкам, гросс нал/безнал, расходы с Б/Ч и Excel «Отчёт оптика»</p></div><button type="button" class="sec" id="rsOldTg" aria-expanded="false">Развернуть ⌄</button></div>
+      <div class="rs-oldh"><div><h2>Выписка за день и ежедневный отчёт оптика</h2><p class="note">Ввод остатков и расходов по р/с, выручка по точкам, гросс нал/безнал, расходы с Б/Ч и Excel «Отчёт оптика»</p></div><button type="button" class="sec rs-tg" id="rsOldTg" aria-expanded="false"><span>Развернуть</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button></div>
       <div id="rsOldBody" hidden>
       <div class="head" style="margin:0 0 12px;align-items:flex-start"><p id="rpPeriod" class="note"></p>''' + dlbox + '''</div>'''
 h = h[:a] + NEW + h[b:]
 rep('''<p class="note rp-foot">''', '''<p class="note rp-foot">''')
 j = h.index('<p class="note rp-foot">'); k = h.index('</p>', j) + 4
 h = h[:k] + '\n      </div>\n    </section>' + h[k:]
+rep('const SKIP="#addPanel,','const SKIP="#rsOld,#addPanel,')
 rep('data-tab="report" aria-selected="false">Отчёт</button>', 'data-tab="report" aria-selected="false">Отчёт р/с</button>')
 rep('    if(tab==="report"){renderReport();return}', '    if(tab==="report"){renderReport();window.__RS&&window.__RS.render();return}')
 rep('if(tab==="report")renderReport()},()=>{});', 'if(tab==="report"){renderReport();window.__RS&&window.__RS.render()}},()=>{});')

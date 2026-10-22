@@ -112,7 +112,7 @@
     const el=$("reconBody");if(!el)return;
     const [f,t]=periodOf(R.per,R.f,R.t);R.f=f;R.t=t;
     $("reconCtl").innerHTML=`<div class="fb-row">${seg("rPer",PER,R.per)}<div class="fb-dates"${R.per==="custom"?"":" hidden"}><label class="f">С<input type="date" id="rFrom" value="${f}"></label><label class="f">По<input type="date" id="rTo" value="${t}"></label></div></div>
-      <div class="fb-row">${seg("rPt",[["all","Все точки"]].concat(POINTS.map(p=>[p,p])),R.pt)}<label class="bz-chk"><input type="checkbox" id="rOnly"${R.only?" checked":""}> Только расхождения</label></div>`;
+      <div class="fb-row">${seg("rPt",[["all","Все точки"]].concat(POINTS.map(p=>[p,p])),R.pt)}<label class="tgl bz-tgl"><input type="checkbox" role="switch" id="rOnly"${R.only?" checked":""}><span class="tg" aria-hidden="true"></span><span>Только расхождения</span></label></div>`;
     bindSeg("rPer",v=>{R.per=v;ls.set("rPer",v);R.sel=null;renderRecon()});
     bindSeg("rPt",v=>{R.pt=v;ls.set("rPt",v);R.sel=null;renderRecon()});
     $("rOnly").onchange=e=>{R.only=e.target.checked;ls.set("rOnly",R.only);renderRecon()};
@@ -222,7 +222,7 @@
         <label class="f">Сравнить с<select id="sbzC"><option value="">${D.dates.length>1?"предыдущей выгрузкой":"—"}</option>${D.dates.filter(x=>x.d<D.cur.d).reverse().map(x=>`<option value="${x.d}"${D.cmp&&x.d===D.cmp.d&&ST.cmp?" selected":""}>${dL(x.d)}</option>`).join("")}</select></label>
         <label class="f">Категория<select id="sbzCat"><option value="all">Все</option>${cats.map(c=>`<option${ST.cat===c?" selected":""}>${esc(c)}</option>`).join("")}</select></label>
         <label class="f" style="min-width:200px">Поиск<input id="sbzQ" placeholder="Товар или артикул" value="${esc(ST.qy)}"></label></div>
-        <div class="fb-row">${seg("sbzPt",[["all","Все места"]].concat(PLACES.map(p=>[p,p])),ST.pt)}<label class="bz-chk"><input type="checkbox" id="sbzOnly"${ST.only?" checked":""}> Только с движением или расхождением</label></div>`;
+        <div class="fb-row">${seg("sbzPt",[["all","Все места"]].concat(PLACES.map(p=>[p,p])),ST.pt)}<label class="tgl bz-tgl"><input type="checkbox" role="switch" id="sbzOnly"${ST.only?" checked":""}><span class="tg" aria-hidden="true"></span><span>Только с движением или расхождением</span></label></div>`;
       $("sbzD").onchange=e=>{ST.d=e.target.value;ST.cmp="";renderStock()};$("sbzC").onchange=e=>{ST.cmp=e.target.value;renderStock()};
       $("sbzCat").onchange=e=>{ST.cat=e.target.value;ST.lim=200;draw()};$("sbzQ").oninput=e=>{ST.qy=e.target.value;ST.lim=200;draw()};
       $("sbzOnly").onchange=e=>{ST.only=e.target.checked;draw()};
