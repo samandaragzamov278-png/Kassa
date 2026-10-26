@@ -46,21 +46,25 @@
     [1457, 578, 1593, 755, "M1524.1 755Q1504.2 755 1486 749.2Q1467.8 743.5 1457 734.3L1468.1 709.6Q1478.3 717.8 1493.4 723.1Q1508.4 728.5 1524.2 728.5Q1537.5 728.5 1545.8 725.6Q1554 722.7 1557.9 717.6Q1561.8 712.5 1561.8 706.1Q1561.8 698.2 1556.2 693.5Q1550.7 688.7 1541.8 685.8Q1532.9 682.9 1522.1 680.5Q1511.3 678.1 1500.4 674.8Q1489.6 671.4 1480.7 666.1Q1471.8 660.8 1466.3 652Q1460.7 643.2 1460.7 629.4Q1460.7 615.3 1468.1 603.7Q1475.5 592 1490.7 585Q1505.9 578 1529.2 578Q1544.5 578 1559.6 581.9Q1574.7 585.8 1585.9 593.2L1575.9 618.1Q1564.5 611.1 1552.4 607.8Q1540.3 604.5 1528.9 604.5Q1516 604.5 1507.7 607.7Q1499.5 610.9 1495.7 616.1Q1492 621.4 1492 627.9Q1492 635.8 1497.5 640.5Q1503 645.2 1511.9 648Q1520.8 650.8 1531.7 653.3Q1542.5 655.8 1553.3 659.1Q1564.1 662.3 1573 667.5Q1581.9 672.7 1587.5 681.5Q1593 690.3 1593 703.8Q1593 717.6 1585.5 729.3Q1578 740.9 1562.7 748Q1547.5 755 1524.1 755Z"]
   ];
 
+  // Фон заставки непрозрачный, со своими мягкими пятнами: «стекло» без backdrop-filter.
+  // Настоящее размытие страницы под заставкой пересчитывалось на каждом кадре, пока страница рисуется, — отсюда были тормоза.
   var CSS =
-    "#saif-splash{--ov:rgba(250,251,253,.82);--hi:rgba(255,255,255,.9);--edge:rgba(255,255,255,.7);--ink:rgba(33,33,33,.725);--blue:rgba(33,177,215,.835);" +
-    "--glow1:rgba(40,185,225,.55);--glow2:rgba(40,185,225,.28);--iglow:transparent;" +
-    "position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;contain:strict;" +
-    "-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);will-change:opacity}" +
-    "#saif-splash.saif-dark{--ov:rgba(8,10,14,.84);--hi:rgba(255,255,255,.18);--edge:rgba(255,255,255,.14);--ink:rgba(235,235,245,.82);--blue:rgba(64,200,240,.95);" +
-    "--glow1:rgba(64,200,240,.75);--glow2:rgba(64,200,240,.4);--iglow:rgba(235,235,245,.28)}" +
-    "#saif-splash .saif-bg{position:absolute;inset:0;background:var(--ov);box-shadow:inset 0 1px 0 var(--hi),inset 0 0 0 1px var(--edge);transition:background-color .5s}" +
+    "#saif-splash{--bg:#F3F6F9;--b1:rgba(70,188,222,.30);--b2:rgba(140,150,255,.22);--b3:rgba(120,220,200,.22);--hi:rgba(255,255,255,.9);--ink:rgba(33,33,33,.725);--blue:rgba(33,177,215,.835);" +
+    "--glow:rgba(40,185,225,.5);--iglow:transparent;" +
+    "position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;contain:strict;will-change:opacity}" +
+    "#saif-splash.saif-dark{--bg:#0B0E13;--b1:rgba(40,150,190,.35);--b2:rgba(90,100,200,.28);--b3:rgba(30,140,130,.26);--hi:rgba(255,255,255,.12);--ink:rgba(235,235,245,.82);--blue:rgba(64,200,240,.95);" +
+    "--glow:rgba(64,200,240,.7);--iglow:rgba(235,235,245,.28)}" +
+    "#saif-splash .saif-bg{position:absolute;inset:0;transition:background-color .5s;background-color:var(--bg);" +
+    "background-image:radial-gradient(40% 35% at 18% 20%,var(--b1),transparent 70%),radial-gradient(35% 30% at 85% 30%,var(--b2),transparent 70%),radial-gradient(45% 40% at 60% 95%,var(--b3),transparent 70%)}" +
     "#saif-splash .saif-bg::after{content:'';position:absolute;inset:0;opacity:.5;background:linear-gradient(160deg,var(--hi) 0%,transparent 28%,transparent 72%,rgba(255,255,255,.06) 100%)}" +
     "#saif-splash .saif-logo{position:relative;width:min(80vw,1100px);aspect-ratio:1602/762;will-change:transform}" +
     "#saif-splash .saif-p{position:absolute;overflow:visible;will-change:transform,opacity}" +
     "#saif-splash .saif-ink path{fill:var(--ink);transition:fill .5s}" +
     "#saif-splash .saif-ink{filter:drop-shadow(0 0 6px var(--iglow))}" +
     "#saif-splash .saif-ring circle{fill:none;stroke:var(--blue);transition:stroke .5s}" +
-    "#saif-splash .saif-ring{filter:drop-shadow(0 0 8px var(--glow1)) drop-shadow(0 0 22px var(--glow2))}";
+    "#saif-splash .saif-ring{filter:drop-shadow(0 0 12px var(--glow))}";
+
+  var K = 2 / 3; // темп: вся анимация ~2,3 с (было ~3,5 с)
 
   // Одна часть логотипа — отдельный <svg>, размещённый в процентах от рамки логотипа
   function part(cls, x0, y0, x1, y1, inner) {
@@ -135,13 +139,13 @@
     var reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!root.animate || reduced) {
       root.style.transition = "opacity .4s";
-      timers.push(setTimeout(function () { root.style.opacity = "0"; }, 600));
-      timers.push(setTimeout(destroy, 1050));
+      timers.push(setTimeout(function () { root.style.opacity = "0"; }, 400));
+      timers.push(setTimeout(destroy, 850));
       return;
     }
 
     function A(el, kf, o) {
-      var a = el.animate(kf, { duration: o.d, delay: o.t || 0, fill: o.f || "both", easing: o.e || SP });
+      var a = el.animate(kf, { duration: o.d * K, delay: (o.t || 0) * K, fill: o.f || "both", easing: o.e || SP });
       anims.push(a);
       return a;
     }
@@ -162,7 +166,7 @@
     function exit() {
       if (done || exiting) return;
       exiting = true;
-      var t0 = Math.max(0, 1650 - (performance.now() - started));
+      var t0 = Math.max(0, 1650 - (performance.now() - started) / K); // в единицах до темпа K
       letters.map(function (l, i) { return [l, Math.abs(i - 5)]; })
         .sort(function (a, b) { return b[1] - a[1]; })
         .forEach(function (p, r) {
