@@ -1,6 +1,6 @@
 <title>Касса Оптики</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Montserrat:wght@500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Montserrat:wght@500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
 <style>
 /* Layout: кассовая книга в одну колонку — итог, ввод расходов с шаблонами, расчёт, анализ, журнал */
 :root{
@@ -761,11 +761,12 @@ body::before,body::after{animation:none!important;transform:none;inset:0;contain
 .kpi.warnc{background-color:var(--minus-soft)}
 .kpi.main{background-color:color-mix(in srgb,var(--accent) 16%,var(--matte))}
 input,select{background-color:var(--field)}
-/* настоящее размытие — только крупные панели верхнего уровня и панель вкладок */
-@media (min-width:641px){
-  .page > .panel,.summary > .tile:not(.hero){background-color:var(--glass);-webkit-backdrop-filter:blur(var(--blur)) saturate(170%)!important;backdrop-filter:blur(var(--blur)) saturate(170%)!important}
-}
+/* настоящее размытие — только у плавающих элементов (панель вкладок, переключатель темы, окна):
+   карточки лежат на неподвижном мягком фоне, размытие под ними почти не видно, а пересчитывалось оно на каждом кадре прокрутки */
 .tabs,.themesw{-webkit-backdrop-filter:blur(var(--blur)) saturate(170%);backdrop-filter:blur(var(--blur)) saturate(170%)}
+.gi,.so-glass,.rp-day,.rp-pickbtn{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+/* насыщенность фона под крупными панелями оставляем — она дешёвая, дорогое здесь только размытие */
+@media (min-width:641px){.page > .panel,.summary > .tile:not(.hero){background-color:var(--glass);-webkit-backdrop-filter:saturate(170%)!important;backdrop-filter:saturate(170%)!important}}
 /* анимации без размытия: только прозрачность и сдвиг (дёшево для видеокарты) */
 @keyframes iosSpring{0%{opacity:0;transform:translateY(12px)}60%{opacity:1}100%{opacity:1;transform:none}}
 @keyframes iosReveal{from{opacity:0;transform:translateY(22px) scale(.98)}to{opacity:1;transform:none}}
@@ -2490,7 +2491,14 @@ window.SaifXL=(function(){
 })();
 </script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+/* Модуль Excel (~900 КБ) нужен только для загрузки и выгрузки файлов — грузим его, когда страница уже открыта и браузер свободен */
+(function(){
+  function go(){const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";s.async=true;document.head.appendChild(s)}
+  function idle(){window.requestIdleCallback?requestIdleCallback(go,{timeout:3000}):setTimeout(go,1000)}
+  document.readyState==="complete"?idle():window.addEventListener("load",idle,{once:true});
+})();
+</script>
 <script>
 (function(){
   // ===================== утилиты =====================

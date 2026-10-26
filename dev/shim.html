@@ -68,14 +68,16 @@ section:has(#phList){display:none!important}
     for(;;){const {data,error}=await sb.from("docs").select("col,id,data").order("col").order("id").range(from,from+N-1);if(error)throw error;all.push(...data);if(data.length<N)break;from+=N}
     cache.clear();all.forEach(r=>colOf(r.col).set(r.id,r.data));loaded=true;
   }
-  let chan=null;
+  let chan=null,wasLive=false;
   function live(){
     if(chan)sb.removeChannel(chan);
     chan=sb.channel("docs-live").on("postgres_changes",{event:"*",schema:"public",table:"docs"},p=>{
       const n=p.new&&p.new.col?p.new:null,o=p.old&&p.old.col?p.old:null;
       if(p.eventType==="DELETE"&&o){colOf(o.col).delete(o.id);emit(o.col,o.id)}
       else if(n){colOf(n.col).set(n.id,n.data);emit(n.col,n.id)}
-    }).subscribe(st=>{const d=$("sbDot");if(d)d.classList.toggle("off",st!=="SUBSCRIBED");if(st==="SUBSCRIBED"&&loaded){loadAll().then(emitAll).catch(()=>{})}});
+    // первое подключение сразу после загрузки — данные свежие, второй раз не качаем;
+    // после обрыва связи перечитываем всё, чтобы не потерять изменения за время без связи
+    }).subscribe(st=>{const d=$("sbDot");if(d)d.classList.toggle("off",st!=="SUBSCRIBED");if(st==="SUBSCRIBED"&&loaded){if(wasLive)loadAll().then(emitAll).catch(()=>{});wasLive=true}});
   }
   const db={
     collection(c){return {
