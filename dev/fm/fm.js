@@ -156,23 +156,35 @@
   }
 
   // ---------- импорт «Отчёта по чекам» из Rahmat ----------
+  // Rahmat отдаёт zip с одним xlsx; в нём лист «Чеки» и те же чеки ещё раз по каждому модулю — повторы отбрасываем
+  function parseRahmat(buf,name,mods){
+    let data=new Uint8Array(buf);
+    if(data[0]===0x50&&data[1]===0x4b){const z=XLSX.CFB.read(data,{type:"array"});const e=z.FileIndex.find(f=>/\.xlsx?$/i.test(f.name));
+      if(e)data=e.content;else if(/\.zip$/i.test(name||""))throw new Error("в архиве нет Excel-файла")}
+    const wb=XLSX.read(data,{type:"array",cellDates:true});
+    const fm2p={},tp2p={};Object.entries(mods||{}).forEach(([p,m])=>{if(m&&m.fm)fm2p[String(m.fm).trim().toUpperCase()]=p;if(m&&m.tp)tp2p[String(m.tp).trim().toLowerCase()]=p});
+    const acc={},seen=new Set(),unknown=new Set();let n=0;
+    wb.SheetNames.forEach(sn=>{const A=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:true,defval:null});
+      const hi=A.findIndex(r=>r&&r.some(c=>/тип операц/i.test(String(c||"")))&&r.some(c=>/налич/i.test(String(c||""))));if(hi<0)return;
+      const H=A[hi].map(c=>String(c||"").toLowerCase().trim());const col=re=>H.findIndex(c=>re.test(c));
+      const iT=col(/тип операц/),iP=col(/торгов/),iF=col(/фискальн/),iC=col(/^налич/),iN=col(/безнал|^карт/),iD=col(/дата/),iK=col(/номер чека/);
+      A.slice(hi+1).forEach(r=>{if(!r)return;const ty=String(r[iT]||"").toLowerCase();if(!/продаж|возврат/.test(ty))return;
+        const dv=r[iD];let d="";if(dv instanceof Date)d=new Date(dv.getTime()+5*3600e3).toISOString().slice(0,10);else{const s=String(dv||"");let m=s.match(/(\d{4})-(\d\d)-(\d\d)/);if(m)d=`${m[1]}-${m[2]}-${m[3]}`;else if((m=s.match(/(\d\d)\.(\d\d)\.(\d{4})/)))d=`${m[3]}-${m[2]}-${m[1]}`}
+        const fmn=iF>=0?String(r[iF]||"").trim().toUpperCase():"",tp=iP>=0?String(r[iP]||"").trim():"";
+        const key=[fmn||tp,String(dv),ty,iK>=0?r[iK]:""].join("|");if(seen.has(key))return;seen.add(key);
+        const p=fm2p[fmn]||tp2p[tp.toLowerCase()];if(!d||!p){unknown.add(fmn||tp||"?");return}
+        const sg=/возврат/.test(ty)?-1:1;const o=(acc[d]||(acc[d]={}))[p]||(acc[d][p]={c:0,n:0,k:0});o.c+=sg*(num(r[iC])||0);o.n+=sg*(num(r[iN])||0);o.k++;n++})});
+    return {acc,n,unknown:[...unknown]};
+  }
   async function importRahmat(file){
     if(typeof XLSX==="undefined"){toast("Excel ещё загружается — попробуйте через пару секунд",true);return}
-    const wb=XLSX.read(await file.arrayBuffer(),{type:"array",cellDates:true});const tp2p={};POINTS().forEach(p=>{const m=mod(p);if(m&&m.tp)tp2p[m.tp.trim().toLowerCase()]=p});
-    const acc={};let n=0,skip=0;
-    wb.SheetNames.forEach(sn=>{const A=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:true,defval:null});
-      const hi=A.findIndex(r=>r&&r.some(c=>/торгов/i.test(String(c||"")))&&r.some(c=>/налич/i.test(String(c||""))));if(hi<0)return;
-      const H=A[hi].map(c=>String(c||"").toLowerCase());const col=re=>H.findIndex(c=>re.test(c));
-      const iT=col(/тип операц/),iP=col(/торгов/),iC=col(/^налич/),iN=col(/безнал/),iD=col(/дата|время/);let cur="";
-      A.slice(hi+1).forEach(r=>{if(!r)return;const first=r.find(v=>v!=null&&v!=="");
-        const dm=String(first||"").match(/^(\d\d)\.(\d\d)\.(\d{4})$/);if(dm&&r.filter(v=>v!=null&&v!=="").length===1){cur=`${dm[3]}-${dm[2]}-${dm[1]}`;return}
-        const ty=String(r[iT]||"").toLowerCase();if(!/продаж|возврат/.test(ty))return;
-        let d=cur;const dv=iD>=0?r[iD]:null;if(dv instanceof Date)d=new Date(dv.getTime()+5*3600e3).toISOString().slice(0,10);else{const m=String(dv||"").match(/(\d\d)\.(\d\d)\.(\d{4})/);if(m)d=`${m[3]}-${m[2]}-${m[1]}`}
-        const p=tp2p[String(r[iP]||"").trim().toLowerCase()];if(!d||!p){skip++;return}
-        const sg=/возврат/.test(ty)?-1:1;const o=(acc[d]||(acc[d]={}))[p]||(acc[d][p]={c:0,n:0,k:0});o.c+=sg*(num(r[iC])||0);o.n+=sg*(num(r[iN])||0);o.k++;n++})});
-    const ds=Object.keys(acc).sort();if(!ds.length){toast("В файле не нашлось чеков продаж по известным торговым пунктам",true);return}
-    for(const d of ds)await saveDay(d,acc[d]);
-    toast(`Загружено ${n} ${pl(n,"чек","чека","чеков")} за ${ds.length} ${pl(ds.length,"день","дня","дней")}${skip?` · пропущено ${skip}`:""}`);F.d=ds[ds.length-1];F.m=F.d.slice(0,7);renderFm();
+    const {acc,n,unknown}=parseRahmat(await file.arrayBuffer(),file.name,cfg.mods);
+    // модули, которые ещё не включены, не трогаем — раздел пока в подготовке
+    const off=new Set();let saved=0;const ds=Object.keys(acc).sort();
+    for(const d of ds){const pts={};Object.entries(acc[d]).forEach(([p,v])=>{if(isOn(p)){pts[p]=v;saved+=v.k}else off.add(p)});if(Object.keys(pts).length)await saveDay(d,pts)}
+    if(!n){toast(unknown.length?"Чеки есть, но модуль не привязан к точке: "+unknown.join(", "):"В файле не нашлось чеков продаж",true);return}
+    toast(saved?`Загружено ${saved} ${pl(saved,"чек","чека","чеков")}${off.size?` · выключенные модули пропущены: ${[...off].join(", ")}`:""}`:`В файле ${n} ${pl(n,"чек","чека","чеков")} (${[...off].join(", ")}), но модули выключены — ничего не записано`,!saved);
+    if(saved){F.d=ds[ds.length-1];F.m=F.d.slice(0,7)}renderFm();
   }
   async function xlsx(){
     if(typeof XLSX==="undefined")return;const rows=reconRows(R.f,R.t,R.pt);
@@ -220,5 +232,5 @@
     if(window.__BZ&&!window.__BZ.__fm){const o=window.__BZ.render;window.__BZ.render=function(v){if(v==="recon"&&R.view==="fm"){renderRecon();return}if(v==="recon")reconChrome();return o.apply(this,arguments)};window.__BZ.__fm=1}
   };
   wrap();document.addEventListener("DOMContentLoaded",wrap);
-  window.__FM={renderFm,renderRecon,kassa,fDay,gross,isOn,get days(){return days},get cfg(){return cfg}};
+  window.__FM={renderFm,renderRecon,kassa,fDay,gross,isOn,parseRahmat,get days(){return days},get cfg(){return cfg}};
 })();

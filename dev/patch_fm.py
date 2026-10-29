@@ -10,7 +10,7 @@ def rep(old, new, cnt=1):
 
 # --- «Отчёт р/с»: переключатель видов, кнопки и место под фискальные модули
 rep('<button type="button" id="rsAdd">＋ Внести выписку за день</button></div>',
-    '<button type="button" id="rsAdd">＋ Внести выписку за день</button><button type="button" class="sec" id="fmImport" hidden>Загрузить отчёт Rahmat</button><button type="button" id="fmAdd" hidden>＋ Внести гросс за день</button><input type="file" id="fmFile" accept=".xlsx,.xls" hidden></div>')
+    '<button type="button" id="rsAdd">＋ Внести выписку за день</button><button type="button" class="sec" id="fmImport" hidden>Загрузить отчёт Rahmat</button><button type="button" id="fmAdd" hidden>＋ Внести гросс за день</button><input type="file" id="fmFile" accept=".zip,.xlsx,.xls" hidden></div>')
 rep('<div class="seg big" role="group" aria-label="Месяц" id="rsSeg"></div>',
     '<div id="fmRsView"></div>\n    <div id="fmBody" class="stack" hidden></div>\n    <div class="seg big" role="group" aria-label="Месяц" id="rsSeg"></div>')
 # --- «Сверка»: переключатель Billz / фискальные модули
