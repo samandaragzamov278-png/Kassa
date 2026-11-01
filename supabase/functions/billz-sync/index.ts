@@ -1,11 +1,16 @@
-// Ежедневная загрузка Сергели из Billz в Кассу: продажи (чеки) + склад + сверка.
+// Ежедневная загрузка точки из Billz в Кассу: продажи (чеки) + склад + сверка.
+// Точка — body.point («Сергели» по умолчанию, «C1»).
 // Запуск: pg_cron (заголовок x-kassa-key) или кнопка в Кассе (токен участника).
 import { createClient } from "jsr:@supabase/supabase-js@2";
 const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 const HOST = "https://api-admin.billz.ai";
-const SHOP = "06471084-7836-4a54-be9a-d0789f79a474";
-const POINT = "Сергели";
-const OWN_PART = "pbz-sergeli";
+// shop — магазин в Billz; part, n — своя часть склада; k — префикс ключей её строк; sync — документ статуса; from — первый день загрузки;
+// after — удачная загрузка позже этого времени отменяет повторы по расписанию
+type Pt = { point: string; shop: string; part: string; n: number; k: string; sync: string; from: string; after: string };
+const POINTS: Record<string, Pt> = {
+  "Сергели": { point: "Сергели", shop: "06471084-7836-4a54-be9a-d0789f79a474", part: "pbz-sergeli", n: 900, k: "bzs", sync: "billz-sergeli", from: "2026-10-20", after: "16:50" },
+  "C1": { point: "C1", shop: "41a96b8a-6049-4f9d-916e-4e61d4297534", part: "pbz-c1", n: 901, k: "bzc1-", sync: "billz-c1", from: "2026-11-01", after: "18:10" },
+};
 const LOOKBACK = 7;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -85,12 +90,12 @@ async function put(col: string, id: string, data: unknown) {
   if (error) throw new Error("Запись " + col + "/" + id + ": " + error.message);
 }
 
-async function run(trigger: string) {
+async function run(trigger: string, P: Pt) {
   const startedAt = Date.now();
   const now = tashNow(), today = isoD(now);
   const { data: cfgRows } = await sb.from("app_config").select("key,value");
   const cfg = Object.fromEntries((cfgRows || []).map((r: any) => [r.key, r.value]));
-  const from0 = cfg.billz_from || "2026-10-20";
+  const from0 = (P.point === "Сергели" && cfg.billz_from) || P.from;
   const fromD = new Date(now.getTime() - LOOKBACK * 864e5);
   const from = isoD(fromD) < from0 ? from0 : isoD(fromD);
 
@@ -99,8 +104,8 @@ async function run(trigger: string) {
   // ---------- 1. Чеки ----------
   const rows: any[] = [];
   for (let page = 1; page < 50; page++) {
-    const j = await bz("/v1/transaction-report-table", { start_date: from, end_date: today, shop_ids: SHOP, currency: "UZS", limit: "100", page: String(page) });
-    const rs = (j.rows || []).filter((r: any) => r.shop_id === SHOP);
+    const j = await bz("/v1/transaction-report-table", { start_date: from, end_date: today, shop_ids: P.shop, currency: "UZS", limit: "100", page: String(page) });
+    const rs = (j.rows || []).filter((r: any) => r.shop_id === P.shop);
     rows.push(...rs);
     if ((j.rows || []).length < 100) break;
   }
@@ -133,7 +138,7 @@ async function run(trigger: string) {
     const date = String(r.date).slice(0, 10);
     const t = Date.parse(String(r.date).replace(" ", "T") + "+05:00") || Date.now();
     const chk = String(r.external_id || "").slice(-3);
-    let rest = Math.round(paid || total), restPays: Record<string, number> = { ...byPay };
+    let rest = Math.round(debt ? paid : paid || total), restPays: Record<string, number> = { ...byPay };
     items.forEach((it: any, idx: number) => {
       const p = it.product || {};
       const sku = String(p.sku || it.sku || "");
@@ -159,7 +164,7 @@ async function run(trigger: string) {
       if (isReturn) notes.push("возврат");
       notes.push(...payNote);
       const doc: any = {
-        date, point: POINT, cat, product: saleName(cat, p.name || it.name || ""), qty: sign * qty,
+        date, point: P.point, cat, product: saleName(cat, p.name || it.name || ""), qty: sign * qty,
         price: lens ? lineTot[idx] : (+it.sale_price || +it.price || 0), sum: sign * sum,
         pay: payNames.length > 1 ? "Смешанная" : (payNames[0] || "Наличные"), pays: linePays,
         check: chk, createdAt: t + idx, note: notes.join(" · "), billz: r.order_id, sku, src: "billz",
@@ -171,10 +176,10 @@ async function run(trigger: string) {
   for (const a of added) await put("sales", a.id, a.doc);
 
   // ---------- 2. Сверка выручки по дням (Billz ↔ Касса) ----------
-  const rep = await bz("/v1/general-report-table", { start_date: from, end_date: today, shop_ids: SHOP, currency: "UZS", detalization: "day", limit: "100", page: "1" });
+  const rep = await bz("/v1/general-report-table", { start_date: from, end_date: today, shop_ids: P.shop, currency: "UZS", detalization: "day", limit: "100", page: "1" });
   const bzDay: Record<string, number> = {};
-  (rep.shop_stats_by_date || []).filter((x: any) => x.shop_id === SHOP).forEach((x: any) => { bzDay[String(x.date).slice(0, 10)] = +x.net_gross_sales || 0; });
-  const allSales = [...sales.map((s: any) => s.data), ...added.map((a) => a.doc)].filter((s: any) => s && s.point === POINT && s.date >= from && s.date <= today);
+  (rep.shop_stats_by_date || []).filter((x: any) => x.shop_id === P.shop).forEach((x: any) => { bzDay[String(x.date).slice(0, 10)] = +x.net_gross_sales || 0; });
+  const allSales = [...sales.map((s: any) => s.data), ...added.map((a) => a.doc)].filter((s: any) => s && s.point === P.point && s.date >= from && s.date <= today);
   const kDay: Record<string, number> = {};
   allSales.forEach((s: any) => { kDay[s.date] = (kDay[s.date] || 0) + (+s.sum || 0) + (+s.debt || 0); });
   const days = [...new Set([...Object.keys(bzDay), ...Object.keys(kDay)])].sort();
@@ -190,26 +195,26 @@ async function run(trigger: string) {
   }
   const newItems: any[] = [];
   prods.forEach((p: any) => {
-    const mv = (p.shop_measurement_values || []).find((v: any) => v.shop_id === SHOP);
+    const mv = (p.shop_measurement_values || []).find((v: any) => v.shop_id === P.shop);
     const q = mv ? +mv.active_measurement_value || 0 : 0;
     if (!q) return;
     const sku = String(p.sku || "");
     const si = skuInfo.get(sku);
-    const pr = (p.shop_prices || []).find((x: any) => x.shop_id === SHOP);
+    const pr = (p.shop_prices || []).find((x: any) => x.shop_id === P.shop);
     const price = (pr && +pr.retail_price) || (si && +si.p) || 0;
     const cat = si ? si.c : stockCatFromSale(saleCat(p.categories && p.categories[0] && p.categories[0].name, p.name || ""));
     newItems.push({
       c: cat, g: (si && si.g) || (cat === "Очковые линзы" || cat === "Аксессуары" ? clean(p.name) : `${cat === "Детские оправы" ? "Детская оправа" : cat === "Очки С/З" ? "С/з очки" : "Оправа"} ${Math.round(price / 1000)}к`),
-      m: p.name, s: sku, p: price > 1 ? price : 0, cp: (si && +si.cp) || +p.supply_price || 0, q, pt: POINT, bz: p.id,
+      m: p.name, s: sku, p: price > 1 ? price : 0, cp: (si && +si.cp) || +p.supply_price || 0, q, pt: P.point, bz: p.id,
     });
   });
   newItems.sort((a, b) => String(a.c).localeCompare(String(b.c)) || b.q - a.q);
-  newItems.forEach((it, i) => { it.k = "bzs" + i; });
+  newItems.forEach((it, i) => { it.k = P.k + i; });
 
-  const fileParts = stockDocs.filter((d: any) => d.id !== OWN_PART && d.id !== "postavki12" && typeof d.data.part === "number");
+  const fileParts = stockDocs.filter((d: any) => !String(d.id).startsWith("pbz-") && d.id !== "postavki12" && typeof d.data.part === "number");
   const up = fileParts.length ? Math.max(...fileParts.map((d: any) => +d.data.uploadedAt || 0)) : Date.now();
   const group = fileParts.filter((d: any) => (+d.data.uploadedAt || 0) === up).sort((a: any, b: any) => a.data.part - b.data.part);
-  const own = stockDocs.find((d: any) => d.id === OWN_PART);
+  const own = stockDocs.find((d: any) => d.id === P.part);
   // сверка с прошлым снимком: было − продано по Кассе после снимка = должно быть; сравниваем с Billz сейчас
   const hasPrev = !!(own && own.data.uploadedAt === up && own.data.snapAt);
   const prevItems: any[] = hasPrev ? own.data.items || [] : [];
@@ -234,21 +239,21 @@ async function run(trigger: string) {
   });
   diffs.sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
 
-  // убрать строки Сергели из файловых частей (один раз) и записать нашу часть
+  // убрать строки точки из файловых частей (один раз) и записать нашу часть
   for (const d of group) {
     const items = d.data.items || [];
-    const kept = items.filter((i: any) => i.pt !== POINT);
+    const kept = items.filter((i: any) => i.pt !== P.point);
     const patch: any = { ...d.data };
     if (kept.length !== items.length) patch.items = kept;
     if (d.data.part === 0) {
-      patch.src = { ...(d.data.src || {}), [POINT]: `Billz, ежедневно; последняя загрузка ${today.slice(8, 10)}.${today.slice(5, 7)} ${now.toISOString().slice(11, 16)}` };
-      patch.soldFromPt = { ...(d.data.soldFromPt || {}), [POINT]: today };
-      patch.soldFromTs = { ...(d.data.soldFromTs || {}), [POINT]: startedAt };
+      patch.src = { ...(d.data.src || {}), [P.point]: `Billz, ежедневно; последняя загрузка ${today.slice(8, 10)}.${today.slice(5, 7)} ${now.toISOString().slice(11, 16)}` };
+      patch.soldFromPt = { ...(d.data.soldFromPt || {}), [P.point]: today };
+      patch.soldFromTs = { ...(d.data.soldFromTs || {}), [P.point]: startedAt };
     }
     if (patch.items !== items || d.data.part === 0) await put("stock", d.id, patch);
   }
-  await put("stock", OWN_PART, {
-    part: 900, parts: group.length + 1, file: "Billz", date: today, uploadedAt: up, total: newItems.length,
+  await put("stock", P.part, {
+    part: P.n, parts: group.length + 1, file: "Billz", date: today, uploadedAt: up, total: newItems.length,
     snapDate: today, snapAt: startedAt, items: newItems,
   });
 
@@ -261,9 +266,9 @@ async function run(trigger: string) {
     stock: { items: newItems.length, qty, prevDate, baseline: !hasPrev, diffs: diffs.slice(0, 200), diffCount: diffs.length },
     ms: Date.now() - startedAt,
   };
-  await put("sync", "billz-sergeli", summary);
-  await put("sync", "billz-sergeli-" + today, summary);
-  await sb.from("billz_log").insert({ kind: "sync", status: 200, params: { trigger, from, to: today }, payload: { ...summary, stock: { ...summary.stock, diffs: diffs.slice(0, 50) } } });
+  await put("sync", P.sync, summary);
+  await put("sync", P.sync + "-" + today, summary);
+  await sb.from("billz_log").insert({ kind: "sync", status: 200, params: { trigger, point: P.point, from, to: today }, payload: { ...summary, stock: { ...summary.stock, diffs: diffs.slice(0, 50) } } });
   return summary;
 }
 
@@ -289,20 +294,22 @@ Deno.serve(async (req) => {
   const who = await allowed(req);
   if (!who) return new Response("forbidden", { status: 403, headers: CORS });
   const body = await req.json().catch(() => ({}));
+  const P = POINTS[body.point || "Сергели"];
+  if (!P) return Response.json({ ok: false, error: "неизвестная точка: " + body.point }, { status: 400, headers: CORS });
   // повторный запуск по расписанию пропускается, если сегодня уже была удачная загрузка
   if (body.retry) {
-    const { data } = await sb.from("docs").select("data").eq("col", "sync").eq("id", "billz-sergeli").maybeSingle();
+    const { data } = await sb.from("docs").select("data").eq("col", "sync").eq("id", P.sync).maybeSingle();
     const last = data && data.data;
-    if (last && last.ok && last.to === isoD(tashNow()) && +last.at >= Date.parse(isoD(tashNow()) + "T16:50:00+05:00")) return Response.json({ ok: true, skipped: true }, { headers: CORS });
+    if (last && last.ok && last.to === isoD(tashNow()) && +last.at >= Date.parse(isoD(tashNow()) + "T" + P.after + ":00+05:00")) return Response.json({ ok: true, skipped: true }, { headers: CORS });
   }
   try {
-    const s = await run(who + (body.retry ? " (повтор)" : ""));
+    const s = await run(who + (body.retry ? " (повтор)" : ""), P);
     return Response.json({ ok: true, sales: s.sales, stock: { items: s.stock.items, diffs: s.stock.diffCount } }, { headers: CORS });
   } catch (e) {
     const err = { ok: false, at: Date.now(), trigger: who, error: String((e as Error).message || e), to: isoD(tashNow()) };
-    const { data } = await sb.from("docs").select("data").eq("col", "sync").eq("id", "billz-sergeli").maybeSingle();
-    await put("sync", "billz-sergeli", { ...(data && data.data && data.data.ok ? { lastOk: data.data } : (data && data.data) || {}), ...err }).catch(() => {});
-    await sb.from("billz_log").insert({ kind: "sync error", status: 0, params: { who }, payload: err });
+    const { data } = await sb.from("docs").select("data").eq("col", "sync").eq("id", P.sync).maybeSingle();
+    await put("sync", P.sync, { ...(data && data.data && data.data.ok ? { lastOk: data.data } : (data && data.data) || {}), ...err }).catch(() => {});
+    await sb.from("billz_log").insert({ kind: "sync error", status: 0, params: { who, point: P.point }, payload: err });
     return Response.json(err, { status: 500, headers: CORS });
   }
 });

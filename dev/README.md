@@ -18,7 +18,7 @@ python3 dev/test/t_audit.py  # проверка: ошибки JS, отступы
 - `shim.html`, `build.py` — вход и хранилище Supabase
 - `splash/saif-splash.js` — заставка с логотипом при каждой загрузке (стиль iOS 26, светлая/тёмная тема); `build.py` встраивает её первой в `<head>`. Закрывающий тег script в этом файле писать нельзя
 - `graph_src.py` → `graph-src/base.html.js` — зеркало JS из base.html (строки совпадают) для карты кода Graphify в `../graphify-out/`; пересоздаётся в `build.sh`
-- `../supabase/functions/` — серверные функции: `billz-sync` (Сергели → Касса), `billz-collect` (чеки, остатки, перемещения всех точек)
+- `../supabase/functions/` — серверные функции: `billz-sync` (Сергели и C1 → Касса, точка в `body.point`), `billz-collect` (чеки, остатки, перемещения всех точек)
 
-Supabase: проект `qvblxhyftwivkzxucfak`. Расписание (pg_cron): выгрузка Billz каждый день в 17:00 по Ташкенту, повторы 17:20 и 19:00.
+Supabase: проект `qvblxhyftwivkzxucfak`. Расписание (pg_cron, по Ташкенту): выгрузка Billz в 17:00, повторы 17:20 и 19:00; Сергели в 17:02; C1 в 18:20, повторы 18:40 и 20:20.
 Тестовые данные в `test/fakesb_synth.js` — вымышленные.
