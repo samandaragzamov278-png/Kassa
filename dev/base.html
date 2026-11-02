@@ -2163,7 +2163,7 @@ window.SaifXL=(function(){
   const isBc=e=>e.type==="inc"&&e.kind==="bc";
   const val=e=>hasFact(e)?e.fact:(+e.amount||0);
 
-  let entries=[], templates=[], cash=null, filter="all", editingId=null;
+  let entries=[], templates=[], cash=null, kLog=[], filter="all", editingId=null;
   const kOpenSt=new Set(), kOpenM=new Set(), kAllM=new Set();
   const pl=(n,a,b,c)=>{n=Math.abs(n)%100;const d=n%10;return n>10&&n<20?c:d===1?a:d>=2&&d<=4?b:c};
   let db=null, mode="loading";
@@ -2199,7 +2199,10 @@ window.SaifXL=(function(){
     $("kMonthSeg").hidden=ms.length<2;
     $("kMonthSeg").innerHTML=ms.map(m=>`<button type="button" data-km="${m}" aria-pressed="${m===M}">${monthName(m)}</button>`).join("");
     $("kMonthSeg").querySelectorAll("[data-km]").forEach(b=>b.onclick=()=>{kMonth=b.dataset.km;kOpenM.clear();kOpenM.add(kMonth);render()});
-    $("tileActual").hidden=!isLast;$("tileDiff").hidden=!isLast;$("addPanel").hidden=!isLast;
+    $("addPanel").hidden=!isLast;
+    $("tileActual").querySelector(".cashrow").style.display=isLast?"":"none";
+    $("tileActual").querySelector(".eyebrow").textContent=isLast?"Фактическая наличка сейчас":"Фактическая наличка на конец месяца";
+    $("tileDiff").querySelector("small").textContent=isLast?"Новые расходы уменьшают и «должно быть», и фактическую наличку, поэтому разница не меняется":"По последнему пересчёту кассы за этот месяц";
     const c=compute();
     let run=c.bcT;
     const nX=c.days.filter(d=>d.src==="Excel").length, nS=c.days.length-nX;
@@ -2218,16 +2221,16 @@ window.SaifXL=(function(){
     $("steps").querySelectorAll("[data-st]").forEach(el=>{const t=()=>{const k=el.dataset.st;kOpenSt.has(k)?kOpenSt.delete(k):kOpenSt.add(k);render()};el.onclick=ev=>{if(ev.target.closest(".items"))return;t()};el.onkeydown=ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();t()}}});
 
     $("tExpected").textContent=fmt(c.expected)+" сум";
-    document.querySelector("#page-kassa .tile.hero .eyebrow").textContent=isLast?"Должно быть на руках":`Остаток Б/Ч за ${monthName(M).toLowerCase()}`;
-    $("tExpectedSub").textContent=(isLast?"":"месяц закрыт, пересчёт налички ведётся в текущем месяце · ")+`расходы: операционные ${fmt(c.sOp)} · прочие ${fmt(c.sOth)}`+(c.saved?` · ${c.saved>0?"сэкономили":"перерасход"} ${fmt(Math.abs(c.saved))}`:"");
+    document.querySelector("#page-kassa .tile.hero .eyebrow").textContent=isLast?"Должно быть на руках":`Должно быть на конец месяца · ${monthName(M).toLowerCase()}`;
+    $("tExpectedSub").textContent=(isLast?"":"месяц закрыт · ")+`расходы: операционные ${fmt(c.sOp)} · прочие ${fmt(c.sOth)}`+(c.saved?` · ${c.saved>0?"сэкономили":"перерасход"} ${fmt(Math.abs(c.saved))}`:"");
 
-    const chip=$("tDiffChip");
-    if(isLast&&cash&&typeof cash.amount==="number"){
+    const chip=$("tDiffChip"), rec=recFor(M);
+    const whenOf=at=>at?new Date(at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
+    if(rec){
       // записи, сделанные после пересчёта, двигают и «должно быть», и фактическую наличку — излишек не меняется
-      const st=cashState(c);const afterExp=st.afterExp, afterInc=st.afterInc, actual=st.actual;
+      const st=cashState(c,rec,M);const afterExp=st.afterExp, afterInc=st.afterInc, actual=st.actual;
       $("tActual").textContent=fmt(actual)+" сум";
-      const when=cash.updatedAt?new Date(cash.updatedAt).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
-      let meta=`Пересчёт ${when}: ${fmt(cash.amount)}`;
+      let meta=`Пересчёт ${whenOf(rec.at)}: ${fmt(rec.amount)}`;
       if(afterExp) meta+=` · после него расходы −${fmt(afterExp)}`;
       if(afterInc) meta+=` · приходы +${fmt(afterInc)}`;
       const diff=c.expected-actual;
@@ -2235,23 +2238,41 @@ window.SaifXL=(function(){
       else if(diff<0){$("tDiff").textContent=fmt(-diff)+" сум";chip.className="chip over";chip.textContent="Излишек"}
       else{$("tDiff").textContent="0 сум";chip.className="chip ok";chip.textContent="Касса сходится"}
       $("cashMeta").textContent=meta;
-    }else{$("tActual").textContent="—";$("tDiff").textContent="—";chip.className="chip none";chip.textContent="Пересчитайте кассу";$("cashMeta").textContent="ещё не пересчитывали"}
+    }else{
+      $("tActual").textContent="—";$("tDiff").textContent="—";chip.className="chip none";chip.textContent=isLast?"Пересчитайте кассу":"Не пересчитывали";
+      const hasCash=cash&&typeof cash.amount==="number", cm=hasCash?recM({at:+cash.updatedAt||0,month:cash.month}):"";
+      $("cashMeta").textContent=isLast&&hasCash&&cm!==M?`в этом месяце ещё не пересчитывали · последний пересчёт ${whenOf(cash.updatedAt)}: ${fmt(cash.amount)} — за ${monthName(cm).toLowerCase()}`:isLast?"ещё не пересчитывали":"в этом месяце кассу не пересчитывали";
+    }
 
     renderAnalysis(c); renderJournal(c); renderTemplates(); renderChart(c);
-    const cl=isLast?c:compute(lastM());
-    const cs=cash&&typeof cash.amount==="number"?cashState(cl):null;
+    const cl=isLast?c:compute(lastM()), rl=recFor(lastM());
+    const cs=rl?cashState(cl,rl,lastM()):null;
     window.__kassa={month:lastM(),expected:cl.expected,actual:cs?cs.actual:null,diff:cs?cs.actual-cl.expected:null,days:cl.days,sOp:cl.sOp,sOth:cl.sOth};
     window.__kassaFor=m=>{const x=compute(m);return {month:m,closed:m<lastM(),expected:x.expected,bcT:x.bcT,sOp:x.sOp,sOth:x.sOth,sInc:x.sInc,days:x.days.length}};
     document.dispatchEvent(new CustomEvent("kassa-updated"));
   }
+  // месяц пересчёта — тот, что был последним в Кассе в момент пересчёта: месяц самой поздней записи, внесённой до него
+  function recM(r){
+    if(r.month)return r.month;
+    let m="";const chk=x=>{const ca=+x.createdAt||0;if(ca>=1e12&&ca<=r.at&&x.date){const k=x.date.slice(0,7);if(k>m)m=k}};
+    sales.forEach(x=>{if(KASSA_POINTS.includes(x.point))chk(x)});kAll().forEach(x=>{if((x.date||"")>="2026-09")chk(x)});
+    return m||new Date(r.at||0).toISOString().slice(0,7);
+  }
+  // последний пересчёт, относящийся к месяцу M (журнал пересчётов + текущий)
+  function recFor(M){
+    const all=kLog.map(r=>({amount:+r.amount,at:+r.at||0,month:r.month}));
+    if(cash&&typeof cash.amount==="number")all.push({amount:cash.amount,at:+cash.updatedAt||0,month:cash.month});
+    let best=null;all.forEach(r=>{if(isNaN(r.amount)||recM(r)!==M)return;if(!best||r.at>best.at)best=r});
+    return best;
+  }
   // после пересчёта: новые записи (расходы и приходы), внесённые позже пересчёта и датированные днём пересчёта или позже, двигают и «должно быть», и фактическую наличку
-  function cashState(c){
-    const cd=cash.updatedAt?new Date(cash.updatedAt):new Date(0);const cday=cd.getFullYear()+"-"+String(cd.getMonth()+1).padStart(2,"0")+"-"+String(cd.getDate()).padStart(2,"0");
-    const isAfter=x=>(x.createdAt||0)>(cash.updatedAt||0)&&(!x.date||x.date>=cday);
-    const after=kEntries(lastM()).filter(isAfter);
+  function cashState(c,r,M){
+    const cd=new Date(r.at||0);const cday=cd.getFullYear()+"-"+String(cd.getMonth()+1).padStart(2,"0")+"-"+String(cd.getDate()).padStart(2,"0");
+    const isAfter=x=>(x.createdAt||0)>(r.at||0)&&(!x.date||x.date>=cday);
+    const after=kEntries(M).filter(isAfter);
     const afterExp=after.filter(e=>e.type!=="inc").reduce((a,e)=>a+val(e),0);
     const afterInc=after.filter(e=>e.type==="inc"&&!isBc(e)).reduce((a,e)=>a+val(e),0);
-    return {afterExp,afterInc,actual:cash.amount-afterExp+afterInc};
+    return {afterExp,afterInc,actual:r.amount-afterExp+afterInc,at:r.at};
   }
 
   function renderAnalysis(c){
@@ -2394,9 +2415,9 @@ window.SaifXL=(function(){
   $("cashSave").addEventListener("click",async()=>{
     const v=parseAmt($("cashInput").value);
     if(isNaN(v)){$("cashMeta").textContent="Введите сумму цифрами";return}
-    const now=Date.now(), exp=compute().expected;
-    try{await put("cash","current",{amount:v,updatedAt:now});$("cashInput").value="";
-      if(mode==="db"){try{await db.doc("cashlog/"+newId()).set({amount:v,expected:exp,at:now})}catch(e){}}
+    const now=Date.now(), exp=compute().expected, month=lastM();
+    try{await put("cash","current",{amount:v,updatedAt:now,month});$("cashInput").value="";
+      if(mode==="db"){try{await db.doc("cashlog/"+newId()).set({amount:v,expected:exp,at:now,month})}catch(e){}}
     }catch(e){$("cashMeta").textContent="Не удалось сохранить, попробуйте ещё раз"}
   });
 
@@ -2443,12 +2464,12 @@ window.SaifXL=(function(){
   // ---------- выгрузка кассы в Excel ----------
   function kMsg(t,bad){const m=$("kMsg");m.textContent=t;m.style.color=bad?"var(--minus)":"var(--plus)";clearTimeout(kMsg._t);if(t&&!/Готовлю/.test(t))kMsg._t=setTimeout(()=>m.textContent="",6000)}
   $("kXlsx").onclick=()=>{
-    const c=compute();
+    const c=compute(), rec=recFor(curM());
     let actual=null,diff=null,when="";
-    if(cash&&typeof cash.amount==="number"){
-      actual=cashState(c).actual;
+    if(rec){
+      actual=cashState(c,rec,curM()).actual;
       diff=actual-c.expected;
-      when=cash.updatedAt?new Date(cash.updatedAt).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):"";
+      when=rec.at?new Date(rec.at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):"";
     }
     const sub="Премиум и Яшнабад · выгружено "+SaifXL.today();
     const sum=[
@@ -2484,6 +2505,7 @@ window.SaifXL=(function(){
     db.collection("entries").onSnapshot(s=>{if(mode!=="db")return;entries=s.docs.map(d=>Object.assign({},d.data(),{id:d.id}));render()},fail);
     db.collection("templates").onSnapshot(s=>{if(mode!=="db")return;templates=s.docs.map(d=>Object.assign({},d.data(),{id:d.id}));render()},fail);
     db.doc("cash/current").onSnapshot(s=>{if(mode!=="db")return;cash=s.exists?s.data():null;render()},()=>{});
+    db.collection("cashlog").onSnapshot(s=>{if(mode!=="db")return;kLog=s.docs.map(d=>d.data());render()},()=>{});
     db.collection("sales").onSnapshot(s=>{if(mode!=="db")return;sales=s.docs.map(d=>Object.assign({},d.data(),{id:d.id}));render()},()=>{});
     db.collection("bc").onSnapshot(s=>{if(mode!=="db")return;bcDocs=s.docs.map(d=>Object.assign({},d.data(),{id:d.id}));render()},()=>{});
   }
@@ -3251,7 +3273,7 @@ window.SaifXL=(function(){
     $("jPrev").disabled=!days.some(d=>d<jDay);$("jNext").disabled=!days.some(d=>d>jDay);
     const dayList=sales.filter(s=>s.date===jDay&&match(s));
     const dex=dayExp.filter(e=>e.date===jDay&&(F.point==="all"||e.branch===F.point));
-    const base=["Премиум","Яшнабад","Сергели"].filter(p=>settings.points.includes(p));
+    const base=["Премиум","Яшнабад","Сергели","C1"].filter(p=>settings.points.includes(p));
     let pts=settings.points.filter(p=>base.includes(p)||dayList.some(s=>s.point===p));
     dayList.forEach(s=>{if(!pts.includes(s.point))pts.push(s.point)});
     if(F.point!=="all")pts=pts.filter(p=>p===F.point);

@@ -237,7 +237,7 @@
   function scrKassa(){
     const KK=K();if(!KK)return top("Касса")+`<div class="m-empty">Загрузка…</div>`;
     const ms=KK.kMonths();if(!st.kM||!ms.includes(st.kM))st.kM=ms[ms.length-1];
-    const M=st.kM,isLast=M===ms[ms.length-1],c=KK.compute(M),cs=isLast?KK.cashState(c):null;
+    const M=st.kM,isLast=M===ms[ms.length-1],c=KK.compute(M),cs=KK.cashState(c,M);
     const diff=cs?cs.actual-c.expected:null;
     const ents=KK.entries.filter(e=>(e.date||"").slice(0,7)===M&&!(e.source==="day"&&!["Премиум","Яшнабад"].includes(e.branch))).sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||0)-(a.createdAt||0));
     const isBc=e=>e.type==="inc"&&e.kind==="bc";
@@ -245,8 +245,8 @@
     const cash=KK.cash;
     return top("Касса","Наличные · Премиум и Яшнабад")+
       (ms.length>1?segH("km",ms.slice(-3).map(m=>[m,MN[+m.slice(5,7)-1]]),M):"")+
-      `<div class="m-card m-hero"><div class="m-lb">${isLast?"Должно быть на руках":"Остаток за "+MN[+M.slice(5,7)-1].toLowerCase()}</div><div class="m-big">${fmt(c.expected)}</div>
-       ${cs?`<div class="m-row" style="margin-top:12px;background:rgba(255,255,255,.16);border-radius:14px;padding:10px 12px"><div><div class="m-sm">Факт${cash&&cash.updatedAt?" · пересчёт "+new Date(cash.updatedAt).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):""}</div><b style="font-size:18px">${fmt(cs.actual)}</b></div><span class="m-pill ${diff>=0?"g":"r"}">${diff>0?"излишек +":diff<0?"недостача −":"сходится "}${diff?fmt(Math.abs(diff)):""}</span></div>`:isLast?`<div class="m-sm" style="margin-top:8px">кассу ещё не пересчитывали</div>`:`<div class="m-sm" style="margin-top:8px">месяц закрыт</div>`}</div>
+      `<div class="m-card m-hero"><div class="m-lb">${isLast?"Должно быть на руках":"Должно быть на конец месяца · "+MN[+M.slice(5,7)-1].toLowerCase()}</div><div class="m-big">${fmt(c.expected)}</div>
+       ${cs?`<div class="m-row" style="margin-top:12px;background:rgba(255,255,255,.16);border-radius:14px;padding:10px 12px"><div><div class="m-sm">Факт${cs.at?" · пересчёт "+new Date(cs.at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):""}</div><b style="font-size:18px">${fmt(cs.actual)}</b></div><span class="m-pill ${diff>=0?"g":"r"}">${diff>0?"излишек +":diff<0?"недостача −":"сходится "}${diff?fmt(Math.abs(diff)):""}</span></div>`:`<div class="m-sm" style="margin-top:8px">${isLast?"в этом месяце кассу ещё не пересчитывали":"в этом месяце кассу не пересчитывали"}</div>`}</div>
       ${isLast?`<div class="m-btns"><button type="button" class="m-btn" data-act="cash">Пересчитать</button><button type="button" class="m-btn pri" data-act="exp">＋ Расход</button></div>`:""}
       <div class="m-sec">Как получилось</div>
       <div class="m-card m-list">

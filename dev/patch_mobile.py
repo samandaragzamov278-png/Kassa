@@ -5,8 +5,8 @@ def rep(a,b,cnt=1):
 D=''+__import__('os').path.dirname(__import__('os').path.abspath(__file__))+'/mobile/'
 # 1) касса: открыть расчёты и запись для мобильной версии
 rep('''  async function init(){
-    $("fDate").value=new Date().toISOString().slice(0,10);syncCatVis();render();''','''  window.__K={compute:m=>compute(m),cashState:c=>cash&&typeof cash.amount==="number"?cashState(c):null,get cash(){return cash},get entries(){return entries},get templates(){return templates},kMonths:()=>kMonths(),lastM:()=>lastM(),put,del,newId,
-    saveCash:async v=>{const now=Date.now(),exp=compute(lastM()).expected;await put("cash","current",{amount:v,updatedAt:now});if(mode==="db"){try{await db.doc("cashlog/"+newId()).set({amount:v,expected:exp,at:now})}catch(e){}}}};
+    $("fDate").value=new Date().toISOString().slice(0,10);syncCatVis();render();''','''  window.__K={compute:m=>compute(m),cashState:(c,M)=>{M=M||lastM();const r=recFor(M);return r?cashState(c,r,M):null},get cash(){return cash},get entries(){return entries},get templates(){return templates},kMonths:()=>kMonths(),lastM:()=>lastM(),put,del,newId,
+    saveCash:async v=>{const now=Date.now(),month=lastM(),exp=compute(month).expected;await put("cash","current",{amount:v,updatedAt:now,month});if(mode==="db"){try{await db.doc("cashlog/"+newId()).set({amount:v,expected:exp,at:now,month})}catch(e){}}}};
   async function init(){
     $("fDate").value=new Date().toISOString().slice(0,10);syncCatVis();render();''')
 # 2) продажи: событие при каждом обновлении данных
