@@ -34,6 +34,7 @@
 
 ## Где что лежит (таблица `public.docs`: col, id, data jsonb)
 - `sales` — продажи. id `sYYp01…` / `sYYy01…` (YY — число месяца, p — Премиум, y — Яшнабад).
+  С ноября 2026 — с месяцем, чтобы не совпасть с прошлыми месяцами: `sMMDDp01`, расходы `eMMDDN`, остаток `bcMMDDp`.
   Поля: point, date (YYYY-MM-DD), check, cat, product, qty, price, sum, pay
   (`Наличные` | `Терминал` | `QR/Payme` | `Смешанная` с `pays`), note, createdAt.
   Uzcard/Humo → `Терминал` + note «Оплата Uzcard/Humo». Продажи Сергели приходят из Billz сами (id `bz_…`).
