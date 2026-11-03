@@ -42,7 +42,11 @@ h3{font-size:15px;font-weight:600}
 .head p{margin:4px 0 0;color:var(--muted)}
 .ph{display:flex;flex-direction:column;gap:2px;margin-bottom:14px}
 
-.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:1280px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tile.rsv .cashrow select{flex:0 0 auto;width:auto}
+.pill.rsv{background:var(--warn-soft,#fff4e0);color:var(--warn,#a35f00)}
+.tagc{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;background:var(--wash);color:var(--muted);font-size:11.5px;font-weight:600;white-space:nowrap}
 .tile{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:6px;min-width:0}
 .tile .big{font-family:var(--f-num);font-size:clamp(20px,3.2vw,28px);font-weight:600;font-variant-numeric:tabular-nums}
 .tile.hero{background:var(--accent);border-color:var(--accent);color:var(--surface)}
@@ -68,7 +72,8 @@ h3{font-size:15px;font-weight:600}
 .tplgroup{display:flex;flex-direction:column;gap:6px}
 .tplgroup + .tplgroup{margin-top:2px}
 
-form.add{display:grid;grid-template-columns:110px minmax(0,1.6fr) 140px 130px 120px 130px;gap:8px;align-items:end}
+form.add{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) minmax(0,1.2fr);gap:8px;align-items:end}
+form.add .wide{grid-column:span 2}
 form.add .actions{grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 @media (max-width:860px){form.add{grid-template-columns:1fr 1fr}form.add .wide{grid-column:1/-1}}
 label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);min-width:0}
@@ -1434,6 +1439,16 @@ window.__zw=function(){return innerWidth/(window.__uiZ||1)};window.__zh=function
       <span class="chip none" id="tDiffChip">Пересчитайте кассу</span>
       <small>Новые расходы уменьшают и «должно быть», и фактическую наличку, поэтому разница не меняется</small>
     </div>
+    <div class="tile rsv" id="tileRsv">
+      <div class="eyebrow">Резерв</div>
+      <div class="big num" id="tRsv">—</div>
+      <small id="rsvMeta">резерва пока нет</small>
+      <div class="cashrow">
+        <input id="rsvInput" inputmode="numeric" placeholder="Сумма пополнения" aria-label="Сумма пополнения резерва">
+        <select id="rsvFrom" aria-label="Откуда пополнение"><option value="kassa">из кассы</option><option value="out">со стороны</option></select>
+        <button id="rsvSave" type="button">Пополнить</button>
+      </div>
+    </div>
   </section>
 
   <section class="panel" id="addPanel">
@@ -1457,6 +1472,12 @@ window.__zw=function(){return innerWidth/(window.__uiZ||1)};window.__zh=function
       </label>
       <label class="f">Точка
         <select id="fBranch"><option>Премиум</option><option>Яшнабад</option><option>Общее</option></select>
+      </label>
+      <label class="f" id="fFundWrap">Откуда деньги
+        <select id="fFund"><option value="">Касса</option><option value="reserve">Резерв</option></select>
+      </label>
+      <label class="f" id="fTagWrap">Тег
+        <select id="fTag"></select>
       </label>
       <label class="f">Дата
         <input id="fDate" type="date">
@@ -1499,6 +1520,7 @@ window.__zw=function(){return innerWidth/(window.__uiZ||1)};window.__zh=function
         <button type="button" data-f="op" aria-pressed="false">Операционные</button>
         <button type="button" data-f="oth" aria-pressed="false">Прочие</button>
         <button type="button" data-f="inc" aria-pressed="false">Приходы</button>
+        <button type="button" data-f="rsv" aria-pressed="false">С резерва</button>
       </div>
     </div>
     <div class="tbl"><table>
@@ -2162,6 +2184,16 @@ window.SaifXL=(function(){
   // приход «остаток Б/Ч дня»: показывается в журнале, но в расчёт не идёт — эти деньги уже в Б/Ч из продаж
   const isBc=e=>e.type==="inc"&&e.kind==="bc";
   const val=e=>hasFact(e)?e.fact:(+e.amount||0);
+  // резерв: пополнение — приход kind "rsv" (from "kassa" — деньги ушли из кассы, "out" — со стороны); расход fund "reserve" — оплачен из резерва, касса не меняется
+  const isRsvIn=e=>e.type==="inc"&&e.kind==="rsv";
+  const fromRsv=e=>e.type!=="inc"&&e.fund==="reserve";
+  const toRsv=e=>isRsvIn(e)&&e.from==="kassa";
+  // теги расходов: по названию, если тег не выбран вручную
+  const TAGS=[["Такси",/такси|taxi/],["Доставка",/доставк|карго/],["Закуп линз",/линз|абу сахий|оптикал|seiko|сейко|закуп/],["Зарплата и мастера",/зп|зарплат|аванс|мастер|бонус|персонал/],
+    ["Аренда и коммуналка",/аренд|коммун|вод[аы]|сувге/],["Реклама",/реклам|блогер|шар[ыов]|лототрон|бокс/],["C1",/ц1|c1|с1|мебел|стол|кондиционер|строй|чеков/],
+    ["Товар и аксессуары",/китай|товар|раствор|капл|аклюдор|микрофибр|авизор|картонн|коробк/],["Хозтовары",/салфет|стакан|моющ|хоз|шоколад|краск|замазк/],["Бухгалтер",/бухгалт/],["Возвраты",/возврат/],["Размен",/сдач/]];
+  const tagAuto=name=>{const n=String(name||"").toLowerCase();const t=TAGS.find(([,r])=>r.test(n));return t?t[0]:"Прочее"};
+  const tagOf=e=>e.tag||tagAuto(e.name);
 
   let entries=[], templates=[], cash=null, kLog=[], filter="all", editingId=null;
   const kOpenSt=new Set(), kOpenM=new Set(), kAllM=new Set();
@@ -2184,11 +2216,17 @@ window.SaifXL=(function(){
   function compute(M){
     const days=bcDays(M), bcT=days.reduce((a,d)=>a+d.p+d.y,0), bcP=days.reduce((a,d)=>a+d.p,0), bcY=days.reduce((a,d)=>a+d.y,0);
     const ke=kEntries(M);
-    const bcIn=ke.filter(isBc), inc=ke.filter(e=>e.type==="inc"&&!isBc(e)), op=ke.filter(e=>e.type!=="inc"&&e.cat==="op"), oth=ke.filter(e=>e.type!=="inc"&&e.cat!=="op");
+    const bcIn=ke.filter(isBc), inc=ke.filter(e=>e.type==="inc"&&!isBc(e)&&!isRsvIn(e)), op=ke.filter(e=>e.type!=="inc"&&e.cat==="op"&&!fromRsv(e)), oth=ke.filter(e=>e.type!=="inc"&&e.cat!=="op"&&!fromRsv(e));
+    const rsvMove=ke.filter(toRsv), rsvExp=ke.filter(fromRsv);
     const sum=a=>a.reduce((x,e)=>x+val(e),0);
-    const sInc=sum(inc), sOp=sum(op), sOth=sum(oth);
+    const sInc=sum(inc), sOp=sum(op), sOth=sum(oth), sRsvMove=sum(rsvMove), sRsvExp=sum(rsvExp);
     const saved=[...op,...oth].reduce((x,e)=>x+(hasFact(e)?(+e.amount||0)-e.fact:0),0);
-    return {days,bcT,bcP,bcY,bcIn,inc,op,oth,sInc,sOp,sOth,saved,expected:bcT+sInc-sOp-sOth};
+    return {days,bcT,bcP,bcY,bcIn,inc,op,oth,rsvMove,rsvExp,sInc,sOp,sOth,sRsvMove,sRsvExp,saved,expected:bcT+sInc-sOp-sOth-sRsvMove};
+  }
+  // остаток резерва за всё время: пополнения минус расходы из резерва
+  function reserve(){
+    const all=kAll(), inn=all.filter(isRsvIn).reduce((a,e)=>a+val(e),0), out=all.filter(fromRsv).reduce((a,e)=>a+val(e),0);
+    return {inn,out,bal:inn-out,n:all.filter(e=>isRsvIn(e)||fromRsv(e)).length};
   }
   const byDate=(a,b)=>(a.date||"").localeCompare(b.date||"")||(a.createdAt||0)-(b.createdAt||0);
   const amtCell=e=>hasFact(e)&&e.fact!==+e.amount?`<s class="plan">${fmt(e.amount)}</s> ${fmt(e.fact)}`:fmt(val(e));
@@ -2216,6 +2254,7 @@ window.SaifXL=(function(){
     h+=stp("op","−","op","Операционные расходы","расходы дня Премиума и Яшнабада",`<span class="num">−${fmt(c.sOp)}</span><span class="run num">остаток ${fmt(run)}</span>`,itemList(c.op),c.op.length);
     run-=c.sOth;
     h+=stp("oth","−","oth","Прочие расходы","крупные платежи: поставщики, бухгалтер, мастера",`<span class="num">−${fmt(c.sOth)}</span><span class="run num">остаток ${fmt(run)}</span>`,itemList(c.oth),c.oth.length);
+    if(c.rsvMove.length){run-=c.sRsvMove;h+=stp("rsv","−","oth","Переведено в резерв","из кассы в резерв",`<span class="num">−${fmt(c.sRsvMove)}</span><span class="run num">остаток ${fmt(run)}</span>`,itemList(c.rsvMove),c.rsvMove.length)}
     h+=`<div class="step total"><span class="sign s">=</span><div class="lbl"><b>Должно быть наличными</b></div><div class="amt num">${fmt(c.expected)}</div></div>`;
     $("steps").innerHTML=h;
     $("steps").querySelectorAll("[data-st]").forEach(el=>{const t=()=>{const k=el.dataset.st;kOpenSt.has(k)?kOpenSt.delete(k):kOpenSt.add(k);render()};el.onclick=ev=>{if(ev.target.closest(".items"))return;t()};el.onkeydown=ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();t()}}});
@@ -2224,6 +2263,10 @@ window.SaifXL=(function(){
     document.querySelector("#page-kassa .tile.hero .eyebrow").textContent=isLast?"Должно быть на руках":`Должно быть на конец месяца · ${monthName(M).toLowerCase()}`;
     $("tExpectedSub").textContent=(isLast?"":"месяц закрыт · ")+`расходы: операционные ${fmt(c.sOp)} · прочие ${fmt(c.sOth)}`+(c.saved?` · ${c.saved>0?"сэкономили":"перерасход"} ${fmt(Math.abs(c.saved))}`:"");
 
+    const rv=reserve();
+    $("tRsv").textContent=fmt(rv.bal)+" сум";
+    $("rsvMeta").textContent=rv.n?`пополнено ${fmt(rv.inn)} · потрачено ${fmt(rv.out)}`:"резерва пока нет — пополните его ниже";
+    $("tileRsv").querySelector(".cashrow").style.display=isLast?"":"none";
     const chip=$("tDiffChip"), rec=recFor(M);
     const whenOf=at=>at?new Date(at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
     if(rec){
@@ -2270,8 +2313,8 @@ window.SaifXL=(function(){
     const cd=new Date(r.at||0);const cday=cd.getFullYear()+"-"+String(cd.getMonth()+1).padStart(2,"0")+"-"+String(cd.getDate()).padStart(2,"0");
     const isAfter=x=>(x.createdAt||0)>(r.at||0)&&(!x.date||x.date>=cday);
     const after=kEntries(M).filter(isAfter);
-    const afterExp=after.filter(e=>e.type!=="inc").reduce((a,e)=>a+val(e),0);
-    const afterInc=after.filter(e=>e.type==="inc"&&!isBc(e)).reduce((a,e)=>a+val(e),0);
+    const afterExp=after.filter(e=>(e.type!=="inc"&&!fromRsv(e))||toRsv(e)).reduce((a,e)=>a+val(e),0);
+    const afterInc=after.filter(e=>e.type==="inc"&&!isBc(e)&&!isRsvIn(e)).reduce((a,e)=>a+val(e),0);
     return {afterExp,afterInc,actual:r.amount-afterExp+afterInc,at:r.at};
   }
 
@@ -2309,14 +2352,15 @@ window.SaifXL=(function(){
     let list=[...kAll()].sort((a,b)=>-byDate(a,b));
     if(filter==="op")list=list.filter(e=>e.type!=="inc"&&e.cat==="op");
     if(filter==="oth")list=list.filter(e=>e.type!=="inc"&&e.cat!=="op");
-    if(filter==="inc")list=list.filter(e=>e.type==="inc");
+    if(filter==="inc")list=list.filter(e=>e.type==="inc"&&!isRsvIn(e));
+    if(filter==="rsv")list=list.filter(e=>isRsvIn(e)||fromRsv(e));
     const M=curM();if(!kOpenM.size)kOpenM.add(M);
     const row=e=>{
-      const pill=isBc(e)?`<span class="pill inc" title="Остаток Б/Ч дня: уже учтён в строке Б/Ч, второй раз не прибавляется">приход · Б/Ч дня</span>`:e.type==="inc"?`<span class="pill inc">приход</span>`:`<span class="pill ${e.cat==="op"?"op":"oth"}">${e.cat==="op"?"операционный":"прочий"}</span>`;
+      const pill=isBc(e)?`<span class="pill inc" title="Остаток Б/Ч дня: уже учтён в строке Б/Ч, второй раз не прибавляется">приход · Б/Ч дня</span>`:isRsvIn(e)?`<span class="pill rsv">в резерв${e.from==="kassa"?" · из кассы":" · со стороны"}</span>`:e.type==="inc"?`<span class="pill inc">приход</span>`:`<span class="pill ${e.cat==="op"?"op":"oth"}">${e.cat==="op"?"операционный":"прочий"}</span>${fromRsv(e)?' <span class="pill rsv">с резерва</span>':""}`;
       const isExp=e.type!=="inc", d=hasFact(e)?(+e.amount||0)-e.fact:0;
       const factCell=isExp?`<input class="factin num" data-fact="${esc(e.id)}" inputmode="numeric" value="${hasFact(e)?fmt(e.fact):""}" placeholder="${fmt(e.amount)}" aria-label="Фактически потрачено: ${esc(e.name)}">`:`<span class="srcs">—</span>`;
       const diffCell=isExp&&d?`<span class="${d>0?"save":"over"} num">${d>0?"−":"+"}${fmt(Math.abs(d))}</span>`:"";
-      return `<tr class="${e.id===editingId?"editing":""}"><td class="num">${dShort(e.date)}</td><td>${esc(e.name)}${e.source==="excel"?' <span class="srcs">· Excel</span>':e.source==="photo"?' <span class="srcs">· записка</span>':e.source==="nal"?' <span class="srcs">· расходы с налички</span>':e.source==="day"?' <span class="srcs">· отчёт дня</span>':""}</td><td>${pill}</td><td>${esc(e.branch||"—")}</td><td class="r num">${isBc(e)?`<span class="srcs" title="уже учтено в Б/Ч">+${fmt(e.amount)}</span>`:(e.type==="inc"?"+":"−")+fmt(e.amount)}</td><td class="r">${factCell}</td><td class="r">${diffCell}</td><td class="acts"><button class="ghost" type="button" data-edit="${esc(e.id)}">Изменить</button><button class="ghost del" type="button" data-del="${esc(e.id)}">Удалить</button></td></tr>`};
+      return `<tr class="${e.id===editingId?"editing":""}"><td class="num">${dShort(e.date)}</td><td>${esc(e.name)}${e.type!=="inc"?`<span class="tagc">${esc(tagOf(e))}</span>`:""}${e.source==="excel"?' <span class="srcs">· Excel</span>':e.source==="photo"?' <span class="srcs">· записка</span>':e.source==="nal"?' <span class="srcs">· расходы с налички</span>':e.source==="day"?' <span class="srcs">· отчёт дня</span>':""}</td><td>${pill}</td><td>${esc(e.branch||"—")}</td><td class="r num">${isBc(e)?`<span class="srcs" title="уже учтено в Б/Ч">+${fmt(e.amount)}</span>`:(e.type==="inc"?"+":"−")+fmt(e.amount)}</td><td class="r">${factCell}</td><td class="r">${diffCell}</td><td class="acts"><button class="ghost" type="button" data-edit="${esc(e.id)}">Изменить</button><button class="ghost del" type="button" data-del="${esc(e.id)}">Удалить</button></td></tr>`};
     const byM={};list.forEach(e=>{const m=(e.date||"").slice(0,7)||"—";(byM[m]=byM[m]||[]).push(e)});
     const months=Object.keys(byM).sort().reverse();
     const LIM=10;
@@ -2374,14 +2418,18 @@ window.SaifXL=(function(){
 
   // ---------- форма ----------
   function showMsg(t,bad){const m=$("formMsg");m.textContent=t;m.style.color=bad?"var(--minus)":"var(--plus)";clearTimeout(showMsg._t);showMsg._t=setTimeout(()=>m.textContent="",4500)}
-  function syncCatVis(){$("fCatWrap").style.visibility=$("fType").value==="inc"?"hidden":"visible"}
+  function syncCatVis(){const inc=$("fType").value==="inc";["fCatWrap","fFundWrap","fTagWrap"].forEach(id=>$(id).style.visibility=inc?"hidden":"visible")}
   $("fType").addEventListener("change",syncCatVis);
-  function resetForm(){editingId=null;$("fName").value="";$("fAmount").value="";$("fSaveTpl").checked=false;$("fSubmit").textContent="Добавить";$("fCancel").hidden=true;$("formTitle").textContent="Добавить расход";$("fDate").value=new Date().toISOString().slice(0,10);render()}
+  // тег: первый пункт — «авто» (по названию), остальные — выбор вручную
+  function syncTag(keep){const v=keep!=null?keep:$("fTag").value;const auto=tagAuto($("fName").value);
+    $("fTag").innerHTML=`<option value="">Авто · ${esc(auto)}</option>`+[...TAGS.map(t=>t[0]),"Прочее"].map(t=>`<option${t===v?" selected":""}>${esc(t)}</option>`).join("")}
+  $("fName").addEventListener("input",()=>syncTag());syncTag("");
+  function resetForm(){editingId=null;$("fName").value="";$("fAmount").value="";$("fSaveTpl").checked=false;$("fFund").value="";syncTag("");$("fSubmit").textContent="Добавить";$("fCancel").hidden=true;$("formTitle").textContent="Добавить расход";$("fDate").value=new Date().toISOString().slice(0,10);render()}
   function applyTpl(id){const t=templates.find(x=>x.id===id);if(!t)return;
-    $("fType").value=t.type||"exp";$("fName").value=t.name;$("fAmount").value=t.amount?fmt(t.amount):"";$("fCat").value=t.cat||"op";$("fBranch").value=t.branch||"Премиум";syncCatVis();
+    $("fType").value=t.type||"exp";$("fName").value=t.name;$("fAmount").value=t.amount?fmt(t.amount):"";$("fCat").value=t.cat||"op";$("fBranch").value=t.branch||"Премиум";$("fFund").value=t.fund||"";syncTag(t.tag||"");syncCatVis();
     $("fAmount").focus();$("fAmount").select();}
   function startEdit(id){const e=entries.find(x=>x.id===id);if(!e)return;editingId=id;
-    $("fType").value=e.type||"exp";$("fName").value=e.name;$("fAmount").value=fmt(e.amount);$("fCat").value=e.cat||"op";$("fBranch").value=e.branch||"Общее";$("fDate").value=e.date||"";syncCatVis();
+    $("fType").value=e.type||"exp";$("fName").value=e.name;$("fAmount").value=fmt(e.amount);$("fCat").value=e.cat||"op";$("fBranch").value=e.branch||"Общее";$("fDate").value=e.date||"";$("fFund").value=e.fund||"";syncTag(e.tag||"");syncCatVis();
     $("fSubmit").textContent="Сохранить изменения";$("fCancel").hidden=false;$("formTitle").textContent="Изменить запись";
     render();$("addPanel").scrollIntoView({behavior:"smooth",block:"start"});}
   $("fCancel").onclick=resetForm;
@@ -2394,12 +2442,14 @@ window.SaifXL=(function(){
     if(!amount||amount<=0){showMsg("Сумма должна быть больше нуля.",true);$("fAmount").focus();return}
     const type=$("fType").value;
     const e={type,name,amount,cat:type==="inc"?"":$("fCat").value,branch:$("fBranch").value,date:$("fDate").value||""};
+    if(type!=="inc"){e.fund=$("fFund").value||"";e.tag=$("fTag").value||""}
+    if(e.fund==="reserve"&&!editingId&&amount>reserve().bal){showMsg(`В резерве только ${fmt(reserve().bal)} сум — пополните резерв или выберите «Касса».`,true);return}
     $("fSubmit").disabled=true;
     try{
       if(editingId){const old=entries.find(x=>x.id===editingId)||{};await put("entries",editingId,Object.assign({},old,e,{id:undefined}));showMsg("Запись обновлена");}
       else{await put("entries",newId(),Object.assign(e,{source:"manual",createdAt:Date.now()}));showMsg((type==="inc"?"Приход":"Расход")+" добавлен: "+fmt(amount)+" сум");}
       if($("fSaveTpl").checked&&!templates.some(t=>t.name.toLowerCase()===name.toLowerCase()&&(t.type||"exp")===type)){
-        await put("templates",newId(),{type,name,amount,cat:e.cat,branch:e.branch,order:50});
+        await put("templates",newId(),Object.assign({type,name,amount,cat:e.cat,branch:e.branch,order:50},type!=="inc"?{fund:e.fund,tag:e.tag}:{}));
       }
       const keepDate=$("fDate").value;resetForm();$("fDate").value=keepDate;
     }catch(err){showMsg(err&&err.code==="quota_exceeded"?"Хранилище заполнено, удалите старые записи.":"Не удалось сохранить. Попробуйте ещё раз.",true)}
@@ -2411,6 +2461,15 @@ window.SaifXL=(function(){
     btn.dataset.confirm="1";btn.textContent="Точно удалить?";btn.style.color="var(--minus)";
     setTimeout(()=>{if(btn.isConnected){delete btn.dataset.confirm;btn.textContent="Удалить";btn.style.color=""}},3000);
   }
+
+  $("rsvInput").addEventListener("input",()=>{const v=parseAmt($("rsvInput").value);$("rsvInput").value=isNaN(v)?"":fmt(v)});
+  $("rsvSave").addEventListener("click",async()=>{
+    const v=parseAmt($("rsvInput").value),from=$("rsvFrom").value;
+    if(isNaN(v)||v<=0){$("rsvMeta").textContent="Введите сумму пополнения цифрами";return}
+    const d=new Date(),date=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    try{await put("entries",newId(),{type:"inc",kind:"rsv",from,name:from==="kassa"?"Пополнение резерва из кассы":"Пополнение резерва со стороны",amount:v,cat:"",branch:"Общее",date,source:"manual",createdAt:Date.now()});$("rsvInput").value=""}
+    catch(e){$("rsvMeta").textContent="Не удалось сохранить, попробуйте ещё раз"}
+  });
 
   $("cashSave").addEventListener("click",async()=>{
     const v=parseAmt($("cashInput").value);
@@ -2783,11 +2842,21 @@ window.SaifXL=(function(){
     const shares=Object.assign(plPrevShares(m),c.shares);
     return {c,days,work,list,past,future,today,done,left,fact,factBefore,shares};
   }
-  function plStats(total,fact,factBefore,work,done,left,past){
+  // средняя выручка рабочего дня по дням недели за 8 недель до сегодня (точка или все); с первой продажи точки; null — если по этому дню меньше двух замеров
+  function plWdAvg(pt){
+    const today=iso(new Date()),own=sales.filter(s=>s.date&&(!pt||s.point===pt));
+    let from=addD(today,-56);const first=own.reduce((m,s)=>!m||s.date<m?s.date:m,"");if(first>from)from=first;
+    const byD={};own.forEach(s=>{if(s.date>=from&&s.date<today)(byD[s.date]=byD[s.date]||[]).push(s)});
+    const acc={};for(let d=from;d&&d<today;d=addD(d,1)){if(plOff(d))continue;const w=pd(d).getDay(),a=acc[w]||(acc[w]={s:0,n:0});a.s+=plRev(byD[d]||[]);a.n++}
+    return w=>acc[w]&&acc[w].n>=2?acc[w].s/acc[w].n:null;
+  }
+  function plStats(total,fact,factBefore,work,done,left,past,pt){
     const pace=done.length?factBefore/done.length:0;
     const need=Math.max(0,total-fact);
     const needDay=past?0:(left.length?need/left.length:need);
-    const forecast=past?fact:factBefore+pace*(work.length-done.length);
+    // прогноз: оставшиеся рабочие дни по средней выручке своего дня недели, без истории — по темпу месяца
+    const wd=past?null:plWdAvg(pt);
+    const forecast=past?fact:factBefore+left.reduce((a,d)=>{const v=wd(pd(d).getDay());return a+(v==null?pace:v)},0);
     const sched=total*Math.min(work.length,done.length)/(work.length||1);
     const pct=total?fact/total:0,fpct=total?forecast/total:0;
     return {pace,need,needDay,needWeek:needDay*Math.min(6,7-(planCfg.off||[0]).length),forecast,sched,gap:fact-sched,pct,fpct};
@@ -2816,7 +2885,7 @@ window.SaifXL=(function(){
         ${CARD("Нужно в день",K.past?"—":fmt(S.needDay)+" сум",K.past?"месяц закрыт":`на ${K.left.length} ${pl(K.left.length,"рабочий день","рабочих дня","рабочих дней")} до конца месяца`,"","main")}
         ${CARD("Нужно в неделю",K.past?"—":fmt(S.needWeek)+" сум","6 рабочих дней, пн–сб")}
         ${CARD("Текущий темп",fmt(S.pace)+" сум",`в рабочий день · ${K.done.length} ${pl(K.done.length,"день","дня","дней")} прошло · линия — выручка по рабочим дням`,K.done.length>1?C.spark(K.done.map(d=>plRev(K.list.filter(s=>s.date===d))),"var(--p3)"):"")}
-        ${CARD("Прогноз на конец месяца",fmt(S.forecast)+" сум",`${pctF(S.fpct)} плана при текущем темпе`,C.ring(Math.min(1,S.fpct),fcol))}
+        ${CARD("Прогноз на конец месяца",fmt(S.forecast)+" сум",`${pctF(S.fpct)} плана · по выручке дней недели за 8 недель`,C.ring(Math.min(1,S.fpct),fcol))}
       </div></div>`;
     // дни
     const byD={};K.list.forEach(s=>{byD[s.date]=(byD[s.date]||0)+(+s.sum||0)});
@@ -2836,7 +2905,7 @@ window.SaifXL=(function(){
       return `<tr class="${cur?"now":""}"><td>${dShort(w.days[0])} — ${dShort(w.days[w.days.length-1])}${cur?" · сейчас":""}</td><td>${wd}</td><td class="num">${fmt(pv)}</td><td class="num">${fut?"—":fmt(fv)}</td><td class="num" style="color:${fut?"var(--muted)":diff>=0?"var(--plus)":"var(--minus)"}">${fut?"—":(diff>=0?"+":"")+fmt(diff)}</td><td class="bar">${plBar(pv?fv/pv:0,null,pv&&fv>=pv?"var(--plus)":"var(--accent)")}</td></tr>`}).join("")}</tbody></table></div>`;
     // точки
     const pts=settings.points.filter(p=>(K.shares[p]||0)>0||K.list.some(s=>s.point===p));
-    const rows=pts.map(p=>{const pl_=K.list.filter(s=>s.point===p),pt=total*(K.shares[p]||0)/100,f=plRev(pl_),fb=plRev(pl_.filter(s=>s.date<K.today)),st=plStats(pt,f,fb,K.work,K.done,K.left,K.past);
+    const rows=pts.map(p=>{const pl_=K.list.filter(s=>s.point===p),pt=total*(K.shares[p]||0)/100,f=plRev(pl_),fb=plRev(pl_.filter(s=>s.date<K.today)),st=plStats(pt,f,fb,K.work,K.done,K.left,K.past,p);
       const chk={};pl_.forEach(s=>{const o=chk[checkKey(s)]||(chk[checkKey(s)]={f:0,l:0,sum:0});o.sum+=+s.sum||0;if(isFrame(s))o.f=1;if(isLens(s))o.l=1});
       const cs=Object.values(chk),fr=cs.filter(o=>o.f),both=fr.filter(o=>o.l).length,disc=pl_.reduce((a,s)=>a+discOf(s),0),gross=f+disc;
       return {p,pt,f,st,n:cs.length,avg:cs.length?f/cs.length:0,fl:fr.length?both/fr.length:null,disc,dp:gross?disc/gross:0}});
@@ -3155,7 +3224,7 @@ window.SaifXL=(function(){
     let tgt=0,P=null;const byP={};
     try{const K=plCalc(calM),sh=F.point==="all"?1:(K.shares[F.point]||0)/100,tot=K.c.total*sh;
       if(tot&&K.work.length){const pl_=sales.filter(s=>(s.date||"").startsWith(calM)&&(F.point==="all"||s.point===F.point));pl_.forEach(s=>byP[s.date]=(byP[s.date]||0)+(+s.sum||0));
-        const fact=plRev(pl_),fb=plRev(pl_.filter(s=>s.date<K.today));tgt=tot/K.work.length;P={tot,fact,K,S:plStats(tot,fact,fb,K.work,K.done,K.left,K.past)}}}catch(e){}
+        const fact=plRev(pl_),fb=plRev(pl_.filter(s=>s.date<K.today));tgt=tot/K.work.length;P={tot,fact,K,S:plStats(tot,fact,fb,K.work,K.done,K.left,K.past,F.point==="all"?null:F.point)}}}catch(e){}
     const mS=v=>(v<0?"−":"+")+calShort(Math.abs(v));
     if(!calSel||!calSel.startsWith(calM))calSel=byD[jDay]&&jDay.startsWith(calM)?jDay:(Object.keys(byD).sort().pop()||"");
     $("sCalTitle").textContent=CAL_MF[+calM.slice(5,7)-1]+" "+calM.slice(0,4);
@@ -3404,7 +3473,11 @@ window.SaifXL=(function(){
     const t=iso(new Date()), mStart=t.slice(0,8)+"01", dim=new Date(+t.slice(0,4),+t.slice(5,7),0).getDate(), el=+t.slice(8,10);
     const monthRev=sales.filter(s=>s.date>=mStart&&s.date<=t&&(F.point==="all"||s.point===F.point)).reduce((x,s)=>x+(+s.sum||0),0);
     if(on(4)&&r.to&&r.to<mStart){const tm=r.to.slice(0,7),mt=sales.filter(s=>(s.date||"").startsWith(tm)&&(F.point==="all"||s.point===F.point)).reduce((x,s)=>x+(+s.sum||0),0);cards+=CARD("Итог месяца",fmt(mt)+" сум",`${MONTHS[+tm.slice(5,7)-1]} ${tm.slice(0,4)} завершён — прогноз не нужен`)}
-    else if(on(4))cards+=CARD("Прогноз на конец месяца",fmt(monthRev/el*dim)+" сум",`за ${MONTHS[+t.slice(5,7)-1]}: продано ${fmtM(monthRev)} за ${el} из ${dim} дн.`);
+    else if(on(4)){
+      // остаток месяца — по средней выручке своего дня недели за 8 недель, без истории — по темпу месяца
+      const wdA=plWdAvg(F.point==="all"?null:F.point),before=sales.filter(s=>s.date>=mStart&&s.date<t&&(F.point==="all"||s.point===F.point)).reduce((x,s)=>x+(+s.sum||0),0),pace=el>1?before/(el-1):monthRev;
+      let fc=before;for(let d=t;d.slice(0,7)===t.slice(0,7);d=addD(d,1)){if(plOff(d))continue;const v=wdA(pd(d).getDay());fc+=v==null?pace:v}
+      cards+=CARD("Прогноз на конец месяца",fmt(Math.max(fc,monthRev))+" сум",`за ${MONTHS[+t.slice(5,7)-1]}: продано ${fmtM(monthRev)} за ${el} из ${dim} дн. · с учётом дней недели`)}
     if(on(5)){let pp=0,d=r.from;const shc={};
       while(d<=r.to){const m=d.slice(0,7),c=plConf(m);if(c.total&&!plOff(d)){if(!shc[m])shc[m]={w:plDays(m).filter(x=>!plOff(x)).length,sh:Object.assign(plPrevShares(m),c.shares)};const k=shc[m];pp+=c.total/(k.w||1)*(F.point==="all"?1:(k.sh[F.point]||0)/100)}d=addD(d,1)}
       const pmOk=m=>plConf(m).total>0,pf=sales.filter(s=>s.date>=r.from&&s.date<=r.to&&pmOk((s.date||"").slice(0,7))&&(F.point==="all"||s.point===F.point)).reduce((x,s)=>x+(+s.sum||0),0),noPlanM=[...new Set(dayList(r).map(x=>x.slice(0,7)))].some(m=>!pmOk(m));
