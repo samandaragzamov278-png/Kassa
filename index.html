@@ -4172,15 +4172,17 @@ window.SaifXL=(function(){
   }
   const unitPrice=s=>+s.price||Math.round((+s.sum||0)/(+s.qty||1));
   // себестоимость очковых линз (за пару): Сергели — из журнала точки (расход «за линзы» дня делится на проданные в этот день пары),
-  // остальные — по правилам settings/lensCost (вид по названию продажи → цена пары с НДС). Расчёт предварительный.
-  let lensCfg=null,lensRules=[],lensDayCache=null;
-  function setLensCfg(d){lensCfg=d||null;lensRules=((d&&d.rules)||[]).map(r=>{try{return {k:r.k,re:new RegExp(r.re,"i"),pair:r.pair==null?null:+r.pair,src:r.src||""}}catch(e){return null}}).filter(Boolean);lensDayCache=null}
+  // остальные — по правилам settings/lensCost (вид по названию продажи → цена пары с НДС); вид не указан — по цене продажи (bands). Расчёт предварительный.
+  let lensCfg=null,lensRules=[],lensBands=[],lensDayCache=null;
+  function setLensCfg(d){lensCfg=d||null;lensRules=((d&&d.rules)||[]).map(r=>{try{return {k:r.k,re:new RegExp(r.re,"i"),pair:r.pair==null?null:+r.pair,src:r.src||""}}catch(e){return null}}).filter(Boolean);lensBands=((d&&d.bands)||[]).filter(b=>b&&+b.pair>0);lensDayCache=null}
   const lensRule=s=>{const t=String(s.product||"").toLowerCase();return lensRules.find(r=>r.re.test(t))||null};
+  // вид неизвестен или у вида нет цены — оценка по цене продажи пары
+  const lensBand=s=>{const r=lensRule(s);if(r&&r.pair>0)return null;const p=unitPrice(s);return lensBands.find(b=>b.max==null||p<=+b.max)||null};
   function sgLensDay(d){
     if(!lensDayCache){const ex={},n={};dayExp.forEach(e=>{if(e.branch==="Сергели"&&/линз/i.test(e.name||"")&&!/доставк/i.test(e.name||""))ex[e.date]=(ex[e.date]||0)+(typeof e.fact==="number"?e.fact:+e.amount||0)});
       sales.forEach(s=>{if(s.point==="Сергели"&&s.cat==="Очковые линзы"&&(+s.qty||0)>0)n[s.date]=(n[s.date]||0)+(+s.qty||0)});lensDayCache={ex,n}}
     const c=lensDayCache;return c.n[d]&&c.ex[d]?c.ex[d]/c.n[d]:null}
-  const lensCostOf=s=>{if(s.cat!=="Очковые линзы")return null;if(s.point==="Сергели"&&lensCfg&&lensCfg.sergeli==="journal")return sgLensDay(s.date);const r=lensRule(s);return r&&r.pair>0?r.pair:null};
+  const lensCostOf=s=>{if(s.cat!=="Очковые линзы")return null;if(s.point==="Сергели"&&lensCfg&&lensCfg.sergeli==="journal")return sgLensDay(s.date);const r=lensRule(s);if(r&&r.pair>0)return r.pair;const b=lensBand(s);return b?+b.pair:null};
   const costOf=s=>{if(+s.cost>0)return +s.cost;{const lc=lensCostOf(s);if(lc!=null)return lc}const m=batchMatcher()(s.product,unitPrice(s),s.point);return m&&+m.it.cp>0?+m.it.cp:0};
   function marginOf(l){let rev=0,cogs=0,all=0;l.forEach(s=>{all+=+s.sum||0;const c=costOf(s);if(c){rev+=+s.sum||0;cogs+=c*(+s.qty||0)}});return {rev,cogs,gross:rev-cogs,m:rev?(rev-cogs)/rev:null,cover:all?rev/all:0}}
 
@@ -4424,13 +4426,13 @@ window.SaifXL=(function(){
     const el=$("lnCostPanel");if(!el)return;el.hidden=!lensRules.length;if(!lensRules.length)return;
     const m={};let revAll=0,revC=0,cogs=0;
     rows.forEach(x=>{const s=x.s,q=+s.qty||0,r=+s.sum||0;revAll+=r;
-      const k=s.point==="Сергели"&&lensCfg&&lensCfg.sergeli==="journal"?"Сергели (по журналу)":((lensRule(s)||{}).k||"Тип не указан");
+      const lr=lensRule(s),lb=lensBand(s),k=s.point==="Сергели"&&lensCfg&&lensCfg.sergeli==="journal"?"Сергели (по журналу)":lr&&lr.pair>0?lr.k:lb?"≈ "+lb.k+" (по цене)":(lr?lr.k:"Тип не указан");
       const c=lensCostOf(s),o=m[k]||(m[k]={k,u:0,r:0,c:0,kr:0,has:false});o.u+=q;o.r+=r;if(c!=null&&c>0){o.c+=c*q;o.kr+=r;o.has=true;revC+=r;cogs+=c*q}});
     const list=Object.values(m).sort((a,b)=>b.r-a.r),gp=revC-cogs;
     const row=o=>`<tr><td>${esc(o.k)}</td><td class="r num">${fmt(o.u)}</td><td class="r num">${fmt(o.r)}</td><td class="r num">${o.has?fmt(o.c):'<span class="srcs">нет цены</span>'}</td><td class="r num">${o.has?fmt(o.kr-o.c):"—"}</td><td class="r num">${o.has&&o.kr?pctF((o.kr-o.c)/o.kr):"—"}</td></tr>`;
     const rules=(lensCfg&&lensCfg.rules)||[];
     el.innerHTML=`<div class="head" style="margin-bottom:6px"><div><h2>Маржа по видам линз <span class="pill rsv">предварительно</span></h2>
-      <p class="note">Расчёт ещё идёт: себестоимость линз сверяется с документами поставщиков. Цена пары с НДС. Сергели — по журналу точки (расход «за линзы» дня делится на проданные пары).</p></div></div>
+      <p class="note">Расчёт ещё идёт: себестоимость линз сверяется с документами поставщиков. Цена пары с НДС. Сергели — по журналу точки (расход «за линзы» дня делится на проданные пары). «≈ по цене» — вид в продаже не указан, определён по цене продажи пары.</p></div></div>
       <div class="kpis" style="margin:8px 0 12px">${CARD("Прибыль с линз",fmt(gp)+" сум",`выручка ${fmtM(revC)} − себестоимость ${fmtM(cogs)}`)}${CARD("Маржа на линзах",revC?pctF(gp/revC):"—",`посчитано по ${pctF(revAll?revC/revAll:0)} выручки с линз`)}</div>
       <div class="tbl"><table><thead><tr><th>Вид</th><th class="r">Пар</th><th class="r">Выручка</th><th class="r">Себестоимость</th><th class="r">Прибыль</th><th class="r">Маржа</th></tr></thead><tbody>${list.map(row).join("")}</tbody></table></div>
       <details style="margin-top:14px"><summary><b>Цены пары по видам</b> <span class="srcs">· можно поправить</span></summary>
