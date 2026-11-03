@@ -8,8 +8,8 @@ const HOST = "https://api-admin.billz.ai";
 // after — удачная загрузка позже этого времени отменяет повторы по расписанию
 type Pt = { point: string; shop: string; part: string; n: number; k: string; sync: string; from: string; after: string };
 const POINTS: Record<string, Pt> = {
-  "Сергели": { point: "Сергели", shop: "06471084-7836-4a54-be9a-d0789f79a474", part: "pbz-sergeli", n: 900, k: "bzs", sync: "billz-sergeli", from: "2026-10-20", after: "16:50" },
-  "C1": { point: "C1", shop: "41a96b8a-6049-4f9d-916e-4e61d4297534", part: "pbz-c1", n: 901, k: "bzc1-", sync: "billz-c1", from: "2026-11-01", after: "18:10" },
+  "Сергели": { point: "Сергели", shop: "06471084-7836-4a54-be9a-d0789f79a474", part: "pbz-sergeli", n: 900, k: "bzs", sync: "billz-sergeli", from: "2026-10-20", after: "19:50" },
+  "C1": { point: "C1", shop: "41a96b8a-6049-4f9d-916e-4e61d4297534", part: "pbz-c1", n: 901, k: "bzc1-", sync: "billz-c1", from: "2026-11-01", after: "19:50" },
 };
 const LOOKBACK = 7;
 

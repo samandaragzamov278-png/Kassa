@@ -23,7 +23,7 @@ BZ = r'''
   // ===================== Billz → Касса: Сергели и C1 =====================
   let bzSync=null,bzBusy=false;
   // время ежедневной загрузки точки (Ташкент); bzSync/bzBusy — Сергели, bzC1/bzBusyC1 — C1
-  const BZP={"Сергели":{h:17,m:0},"C1":{h:18,m:20}};
+  const BZP={"Сергели":{h:20,m:0},"C1":{h:20,m:0}};
   let bzPt="Сергели",bzC1=null,bzBusyC1=false;
   const bzOf=p=>p==="C1"?bzC1:bzSync, bzIsBusy=p=>p==="C1"?bzBusyC1:bzBusy, bzSetBusy=(p,v)=>{if(p==="C1")bzBusyC1=v;else bzBusy=v};
   const bzTime=ms=>ms?new Date(ms).toLocaleString("ru-RU",{timeZone:"Asia/Tashkent",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}).replace(",",""):"—";
@@ -45,7 +45,7 @@ BZ = r'''
     const el=$("bzPanel");if(!el)return;el.hidden=false;
     const p=bzPt, s=bzOf(p), st=bzState(p), last=s&&(s.ok?s:s.lastOk), busy=bzIsBusy(p);
     const sc=(last&&last.salesCheck)||[], att=(last&&last.attention)||[], sk=(last&&last.stock)||null, sl=(last&&last.sales)||null;
-    el.innerHTML=`<div class="head" style="margin-bottom:8px;align-items:center"><div><h2>Billz → Касса</h2><p class="note">Каждый день сами загружаются чеки и остатки: Сергели в 17:00, C1 в 18:20. Следующая загрузка ${esc(p)}: ${bzNext(p)}.</p></div>
+    el.innerHTML=`<div class="head" style="margin-bottom:8px;align-items:center"><div><h2>Billz → Касса</h2><p class="note">Каждый день в 20:00 сами загружаются чеки и остатки Сергели и C1. Следующая загрузка ${esc(p)}: ${bzNext(p)}.</p></div>
       <button type="button" id="bzRunBtn" ${busy?"disabled":""}>${busy?"Загружаю…":"Обновить сейчас"}</button></div>
       <div class="seg bz-pts" role="group" aria-label="Точка">${Object.keys(BZP).map(k=>`<button type="button" data-bzpt="${k}" aria-pressed="${k===p}"><i class="bz-dot ${bzState(k).cls}"></i>${k}</button>`).join("")}</div>
       <div class="bz-st ${st.cls}">${esc(st.t)}</div>

@@ -480,7 +480,7 @@
     const SS=S();let s=null,stt=null,busy=false,next="";try{s=SS.bzSync();stt=SS.bzState();busy=SS.bzBusy();next=SS.bzNext()}catch(e){}
     const last=s&&(s.ok?s:s.lastOk),T=ms=>{try{return SS.bzTime(ms)}catch(e){return ""}};
     const sc=(last&&last.salesCheck)||[],sk=last&&last.stock,sl=last&&last.sales,att=(last&&last.attention)||[];
-    return backBtn("Ещё")+top("Billz · Сергели","каждый день в 17:00 · следующая "+esc(next))+
+    return backBtn("Ещё")+top("Billz · Сергели","каждый день в 20:00 · следующая "+esc(next))+
       `<div class="m-card"><div class="m-bzst ${stt?stt.cls:"wait"}">${esc(stt?stt.t:"Загрузка…")}</div>
         <button type="button" class="m-btn pri" data-act="bzrun"${busy?" disabled":""} style="width:100%;margin-top:10px">${busy?"Загружаю…":"Обновить сейчас"}</button></div>
       ${last?`<div class="m-sec">Продажи</div><div class="m-card m-list"><div class="m-it"><div class="l">Добавлено в последний раз<small>${sl&&sl.debts&&sl.debts.length?"долги: "+sl.debts.map(d=>dShortM(d.d)+" "+fmt(d.debt)).join(", "):"без долгов"}</small></div><div class="r">${sl&&sl.checks?sl.checks+" "+pl(sl.checks,"чек","чека","чеков"):"—"}</div></div>

@@ -20,5 +20,5 @@ python3 dev/test/t_audit.py  # проверка: ошибки JS, отступы
 - `graph_src.py` → `graph-src/base.html.js` — зеркало JS из base.html (строки совпадают) для карты кода Graphify в `../graphify-out/`; пересоздаётся в `build.sh`
 - `../supabase/functions/` — серверные функции: `billz-sync` (Сергели и C1 → Касса, точка в `body.point`), `billz-collect` (чеки, остатки, перемещения всех точек)
 
-Supabase: проект `qvblxhyftwivkzxucfak`. Расписание (pg_cron, по Ташкенту): выгрузка Billz в 17:00, повторы 17:20 и 19:00; Сергели в 17:02; C1 в 18:20, повторы 18:40 и 20:20.
+Supabase: проект `qvblxhyftwivkzxucfak`. Расписание (pg_cron, по Ташкенту): выгрузка Billz в 20:00, Сергели в 20:02, C1 в 20:04; повторы в 20:20 и 21:00 (пропускаются, если после 19:50 уже была удачная загрузка).
 Тестовые данные в `test/fakesb_synth.js` — вымышленные.

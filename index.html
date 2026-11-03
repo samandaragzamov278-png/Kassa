@@ -4572,7 +4572,7 @@ window.SaifXL=(function(){
   // ===================== Billz → Касса: Сергели и C1 =====================
   let bzSync=null,bzBusy=false,bzCollect=null;
   // время ежедневной загрузки точки (Ташкент); bzSync/bzBusy — Сергели, bzC1/bzBusyC1 — C1
-  const BZP={"Сергели":{h:17,m:0},"C1":{h:18,m:20}};
+  const BZP={"Сергели":{h:20,m:0},"C1":{h:20,m:0}};
   let bzPt="Сергели",bzC1=null,bzBusyC1=false;
   const bzOf=p=>p==="C1"?bzC1:bzSync, bzIsBusy=p=>p==="C1"?bzBusyC1:bzBusy, bzSetBusy=(p,v)=>{if(p==="C1")bzBusyC1=v;else bzBusy=v};
   const bzTime=ms=>ms?new Date(ms).toLocaleString("ru-RU",{timeZone:"Asia/Tashkent",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}).replace(",",""):"—";
@@ -4594,7 +4594,7 @@ window.SaifXL=(function(){
     const el=$("bzPanel");if(!el)return;el.hidden=false;
     const p=bzPt, s=bzOf(p), st=bzState(p), last=s&&(s.ok?s:s.lastOk), busy=bzIsBusy(p);
     const sc=(last&&last.salesCheck)||[], att=(last&&last.attention)||[], sk=(last&&last.stock)||null, sl=(last&&last.sales)||null;
-    el.innerHTML=`<div class="head" style="margin-bottom:8px;align-items:center"><div><h2>Billz → Касса</h2><p class="note">Каждый день сами загружаются чеки и остатки: Сергели в 17:00, C1 в 18:20. Следующая загрузка ${esc(p)}: ${bzNext(p)}.</p></div>
+    el.innerHTML=`<div class="head" style="margin-bottom:8px;align-items:center"><div><h2>Billz → Касса</h2><p class="note">Каждый день в 20:00 сами загружаются чеки и остатки Сергели и C1. Следующая загрузка ${esc(p)}: ${bzNext(p)}.</p></div>
       <button type="button" id="bzRunBtn" ${busy?"disabled":""}>${busy?"Загружаю…":"Обновить сейчас"}</button></div>
       <div class="seg bz-pts" role="group" aria-label="Точка">${Object.keys(BZP).map(k=>`<button type="button" data-bzpt="${k}" aria-pressed="${k===p}"><i class="bz-dot ${bzState(k).cls}"></i>${k}</button>`).join("")}</div>
       <div class="bz-st ${st.cls}">${esc(st.t)}</div>
@@ -6839,7 +6839,7 @@ addEventListener("scroll",()=>{if(!t)t=requestAnimationFrame(chk)},{passive:true
     const SS=S();let s=null,stt=null,busy=false,next="";try{s=SS.bzSync();stt=SS.bzState();busy=SS.bzBusy();next=SS.bzNext()}catch(e){}
     const last=s&&(s.ok?s:s.lastOk),T=ms=>{try{return SS.bzTime(ms)}catch(e){return ""}};
     const sc=(last&&last.salesCheck)||[],sk=last&&last.stock,sl=last&&last.sales,att=(last&&last.attention)||[];
-    return backBtn("Ещё")+top("Billz · Сергели","каждый день в 17:00 · следующая "+esc(next))+
+    return backBtn("Ещё")+top("Billz · Сергели","каждый день в 20:00 · следующая "+esc(next))+
       `<div class="m-card"><div class="m-bzst ${stt?stt.cls:"wait"}">${esc(stt?stt.t:"Загрузка…")}</div>
         <button type="button" class="m-btn pri" data-act="bzrun"${busy?" disabled":""} style="width:100%;margin-top:10px">${busy?"Загружаю…":"Обновить сейчас"}</button></div>
       ${last?`<div class="m-sec">Продажи</div><div class="m-card m-list"><div class="m-it"><div class="l">Добавлено в последний раз<small>${sl&&sl.debts&&sl.debts.length?"долги: "+sl.debts.map(d=>dShortM(d.d)+" "+fmt(d.debt)).join(", "):"без долгов"}</small></div><div class="r">${sl&&sl.checks?sl.checks+" "+pl(sl.checks,"чек","чека","чеков"):"—"}</div></div>
