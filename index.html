@@ -3594,24 +3594,31 @@ window.SaifXL=(function(){
     const shares=Object.assign(plPrevShares(m),c.shares);
     return {c,days,work,list,past,future,today,done,left,fact,factBefore,shares};
   }
-  // средняя выручка рабочего дня по дням недели за 8 недель до сегодня (точка или все); с первой продажи точки; null — если по этому дню меньше двух замеров
-  function plWdAvg(pt){
+  // прогноз остатка месяца: индекс дня недели (как этот день торгует относительно среднего, за 8 недель до сегодня)
+  // × уровень продаж текущего месяца; в начале месяца уровень сглаживается средним за 8 недель.
+  // Вилка ~80%: разброс дней вокруг ожидания за те же 8 недель. Проверка на октябре 2026: ошибка итога месяца 3–7% по точкам.
+  function plFcast(pt,done,left,factBefore){
     const today=iso(new Date()),own=sales.filter(s=>s.date&&(!pt||s.point===pt));
     let from=addD(today,-56);const first=own.reduce((m,s)=>!m||s.date<m?s.date:m,"");if(first>from)from=first;
     const byD={};own.forEach(s=>{if(s.date>=from&&s.date<today)(byD[s.date]=byD[s.date]||[]).push(s)});
-    const acc={};for(let d=from;d&&d<today;d=addD(d,1)){if(plOff(d))continue;const w=pd(d).getDay(),a=acc[w]||(acc[w]={s:0,n:0});a.s+=plRev(byD[d]||[]);a.n++}
-    return w=>acc[w]&&acc[w].n>=2?acc[w].s/acc[w].n:null;
+    const hist=[];for(let d=from;d&&d<today;d=addD(d,1)){if(!plOff(d))hist.push({w:pd(d).getDay(),v:plRev(byD[d]||[])})}
+    const mean=hist.length?hist.reduce((a,x)=>a+x.v,0)/hist.length:0,idx={};
+    if(mean>0)for(let w=0;w<7;w++){const xs=hist.filter(x=>x.w===w);if(xs.length>=2)idx[w]=xs.reduce((a,x)=>a+x.v,0)/xs.length/mean}
+    const ix=d=>idx[pd(d).getDay()]||1;
+    const base=done.reduce((a,d)=>a+ix(d),0),lvlM=base?factBefore/base:mean,k=Math.min(1,done.length/12),lvl=mean>0?k*lvlM+(1-k)*mean:lvlM;
+    const exp=left.map(d=>lvl*ix(d)),fc=factBefore+exp.reduce((a,b)=>a+b,0);
+    const res=mean>0?hist.map(x=>x.v/(mean*(idx[x.w]||1))-1):[],sd=res.length>2?Math.sqrt(res.reduce((a,r)=>a+r*r,0)/(res.length-1)):0;
+    const band=1.28*sd*Math.sqrt(exp.reduce((a,e)=>a+e*e,0));
+    return {fc,lo:Math.max(factBefore,fc-band),hi:fc+band};
   }
   function plStats(total,fact,factBefore,work,done,left,past,pt){
     const pace=done.length?factBefore/done.length:0;
     const need=Math.max(0,total-fact);
     const needDay=past?0:(left.length?need/left.length:need);
-    // прогноз: оставшиеся рабочие дни по средней выручке своего дня недели, без истории — по темпу месяца
-    const wd=past?null:plWdAvg(pt);
-    const forecast=past?fact:factBefore+left.reduce((a,d)=>{const v=wd(pd(d).getDay());return a+(v==null?pace:v)},0);
+    const fx=past?{fc:fact,lo:fact,hi:fact}:plFcast(pt,done,left,factBefore),forecast=fx.fc;
     const sched=total*Math.min(work.length,done.length)/(work.length||1);
     const pct=total?fact/total:0,fpct=total?forecast/total:0;
-    return {pace,need,needDay,needWeek:needDay*Math.min(6,7-(planCfg.off||[0]).length),forecast,sched,gap:fact-sched,pct,fpct};
+    return {pace,need,needDay,needWeek:needDay*Math.min(6,7-(planCfg.off||[0]).length),forecast,fLo:fx.lo,fHi:fx.hi,sched,gap:fact-sched,pct,fpct};
   }
   const plCls=f=>f>=1?"ok":f>=0.85?"mid":"bad";
   const plCol=f=>f>=1?"var(--plus)":f>=0.85?"var(--warn)":"var(--minus)";
@@ -3637,7 +3644,7 @@ window.SaifXL=(function(){
         ${CARD("Нужно в день",K.past?"—":fmt(S.needDay)+" сум",K.past?"месяц закрыт":`на ${K.left.length} ${pl(K.left.length,"рабочий день","рабочих дня","рабочих дней")} до конца месяца`,"","main")}
         ${CARD("Нужно в неделю",K.past?"—":fmt(S.needWeek)+" сум","6 рабочих дней, пн–сб")}
         ${CARD("Текущий темп",fmt(S.pace)+" сум",`в рабочий день · ${K.done.length} ${pl(K.done.length,"день","дня","дней")} прошло · линия — выручка по рабочим дням`,K.done.length>1?C.spark(K.done.map(d=>plRev(K.list.filter(s=>s.date===d))),"var(--p3)"):"")}
-        ${CARD("Прогноз на конец месяца",fmt(S.forecast)+" сум",`${pctF(S.fpct)} плана · по выручке дней недели за 8 недель`,C.ring(Math.min(1,S.fpct),fcol))}
+        ${CARD("Прогноз на конец месяца",fmt(S.forecast)+" сум",`${pctF(S.fpct)} плана · вилка ${fmtM(S.fLo)}–${fmtM(S.fHi)}`,C.ring(Math.min(1,S.fpct),fcol))}
       </div></div>`;
     // дни
     const byD={};K.list.forEach(s=>{byD[s.date]=(byD[s.date]||0)+(+s.sum||0)});
@@ -4226,10 +4233,11 @@ window.SaifXL=(function(){
     const monthRev=sales.filter(s=>s.date>=mStart&&s.date<=t&&(F.point==="all"||s.point===F.point)).reduce((x,s)=>x+(+s.sum||0),0);
     if(on(4)&&r.to&&r.to<mStart){const tm=r.to.slice(0,7),mt=sales.filter(s=>(s.date||"").startsWith(tm)&&(F.point==="all"||s.point===F.point)).reduce((x,s)=>x+(+s.sum||0),0);cards+=CARD("Итог месяца",fmt(mt)+" сум",`${MONTHS[+tm.slice(5,7)-1]} ${tm.slice(0,4)} завершён — прогноз не нужен`)}
     else if(on(4)){
-      // остаток месяца — по средней выручке своего дня недели за 8 недель, без истории — по темпу месяца
-      const wdA=plWdAvg(F.point==="all"?null:F.point),before=sales.filter(s=>s.date>=mStart&&s.date<t&&(F.point==="all"||s.point===F.point)).reduce((x,s)=>x+(+s.sum||0),0),pace=el>1?before/(el-1):monthRev;
-      let fc=before;for(let d=t;d.slice(0,7)===t.slice(0,7);d=addD(d,1)){if(plOff(d))continue;const v=wdA(pd(d).getDay());fc+=v==null?pace:v}
-      cards+=CARD("Прогноз на конец месяца",fmt(Math.max(fc,monthRev))+" сум",`за ${MONTHS[+t.slice(5,7)-1]}: продано ${fmtM(monthRev)} за ${el} из ${dim} дн. · с учётом дней недели`)}
+      // остаток месяца — индекс дня недели × уровень месяца (plFcast), с вилкой
+      const done=[],left=[];for(let d=mStart;d.slice(0,7)===t.slice(0,7);d=addD(d,1)){if(plOff(d))continue;(d<t?done:left).push(d)}
+      const before=sales.filter(s=>s.date>=mStart&&s.date<t&&(F.point==="all"||s.point===F.point)).reduce((x,s)=>x+(+s.sum||0),0);
+      const fx=plFcast(F.point==="all"?null:F.point,done,left,before);
+      cards+=CARD("Прогноз на конец месяца",fmt(Math.max(fx.fc,monthRev))+" сум",`скорее всего ${fmtM(fx.lo)}–${fmtM(fx.hi)} · продано ${fmtM(monthRev)} за ${el} из ${dim} дн.`)}
     if(on(5)){let pp=0,d=r.from;const shc={};
       while(d<=r.to){const m=d.slice(0,7),c=plConf(m);if(c.total&&!plOff(d)){if(!shc[m])shc[m]={w:plDays(m).filter(x=>!plOff(x)).length,sh:Object.assign(plPrevShares(m),c.shares)};const k=shc[m];pp+=c.total/(k.w||1)*(F.point==="all"?1:(k.sh[F.point]||0)/100)}d=addD(d,1)}
       const pmOk=m=>plConf(m).total>0,pf=sales.filter(s=>s.date>=r.from&&s.date<=r.to&&pmOk((s.date||"").slice(0,7))&&(F.point==="all"||s.point===F.point)).reduce((x,s)=>x+(+s.sum||0),0),noPlanM=[...new Set(dayList(r).map(x=>x.slice(0,7)))].some(m=>!pmOk(m));
