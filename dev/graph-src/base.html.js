@@ -1329,6 +1329,7 @@
 
 
 
+
 window.__uiZ=1;try{const z=localStorage.getItem("kassa.size");if(z==="s"||z==="l"){document.documentElement.setAttribute("data-size",z);window.__uiZ=z==="s"?.9:1.1}}catch(e){}
 window.__zr=function(el){const r=el.getBoundingClientRect(),z=window.__uiZ||1;return {left:r.left/z,right:r.right/z,top:r.top/z,bottom:r.bottom/z,width:r.width/z,height:r.height/z}};
 window.__zw=function(){return innerWidth/(window.__uiZ||1)};window.__zh=function(){return innerHeight/(window.__uiZ||1)};
@@ -2256,6 +2257,8 @@ window.SaifXL=(function(){
     run-=c.sOth;
     h+=stp("oth","−","oth","Прочие расходы","крупные платежи: поставщики, бухгалтер, мастера",`<span class="num">−${fmt(c.sOth)}</span><span class="run num">остаток ${fmt(run)}</span>`,itemList(c.oth),c.oth.length);
     if(c.rsvMove.length){run-=c.sRsvMove;h+=stp("rsv","−","oth","Переведено в резерв","из кассы в резерв",`<span class="num">−${fmt(c.sRsvMove)}</span><span class="run num">остаток ${fmt(run)}</span>`,itemList(c.rsvMove),c.rsvMove.length)}
+    // расходы из резерва — для наглядности: кассу не уменьшают, остаток кассы не меняется
+    h+=stp("rsvx","·","rsvx","Расходы из резерва",c.rsvExp.length?"оплачены резервом, касса не меняется":"в этом месяце не было",`<span class="num">−${fmt(c.sRsvExp)}</span><span class="run num">в резерве ${fmt(reserve().bal)}</span>`,itemList(c.rsvExp),c.rsvExp.length);
     h+=`<div class="step total"><span class="sign s">=</span><div class="lbl"><b>Должно быть наличными</b></div><div class="amt num">${fmt(c.expected)}</div></div>`;
     $("steps").innerHTML=h;
     $("steps").querySelectorAll("[data-st]").forEach(el=>{const t=()=>{const k=el.dataset.st;kOpenSt.has(k)?kOpenSt.delete(k):kOpenSt.add(k);render()};el.onclick=ev=>{if(ev.target.closest(".items"))return;t()};el.onkeydown=ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();t()}}});

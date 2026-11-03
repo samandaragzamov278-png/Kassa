@@ -254,6 +254,8 @@
         <div class="m-it"><div class="l">Приходы<small>${c.inc.length} ${pl(c.inc.length,"запись","записи","записей")}</small></div><div class="r m-up">+${fmt(c.sInc)}</div></div>
         <div class="m-it"><div class="l">Операционные<small>${c.op.length} ${pl(c.op.length,"запись","записи","записей")}</small></div><div class="r m-dn">−${fmt(c.sOp)}</div></div>
         <div class="m-it"><div class="l">Прочие<small>поставщики, мастера, зарплата</small></div><div class="r m-dn">−${fmt(c.sOth)}</div></div>
+        ${c.sRsvMove?`<div class="m-it"><div class="l">Переведено в резерв<small>из кассы</small></div><div class="r m-dn">−${fmt(c.sRsvMove)}</div></div>`:""}
+        <div class="m-it"><div class="l">Расходы из резерва<small>касса не меняется</small></div><div class="r">−${fmt(c.sRsvExp||0)}</div></div>
         <div class="m-it" style="font-weight:700"><div class="l">Должно быть</div><div class="r">${fmt(c.expected)}</div></div></div>
       <div class="m-sec">Записи · ${MN[+M.slice(5,7)-1].toLowerCase()}</div>
       <div class="m-card m-list">${ents.length?ents.slice(0,st.kAll?999:25).map(e=>`<div class="m-it tap" data-ent="${esc(e.id)}"><div class="l">${esc(e.name)}<small>${e.date?dLong(e.date):"без даты"} · ${isBc(e)?"Б/Ч дня, уже в расчёте":e.type==="inc"?"приход":e.cat==="op"?"операционный":"прочий"}${e.branch?" · "+esc(e.branch):""}</small></div><div class="r ${e.type==="inc"?(isBc(e)?"":"m-up"):""}">${e.type==="inc"?"+":"−"}${fmt(val(e))}</div></div>`).join(""):`<div class="m-empty">Записей нет</div>`}</div>
