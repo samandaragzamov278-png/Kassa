@@ -2099,6 +2099,7 @@ window.__zw=function(){return innerWidth/(window.__uiZ||1)};window.__zh=function
 
 
 
+
 /* Общая выгрузка в Excel с оформлением Saif-Optics (ExcelJS грузится по первому клику) */
 window.SaifXL=(function(){
   let lib=null, dl;
@@ -3422,7 +3423,17 @@ window.SaifXL=(function(){
     return matcherCache;
   }
   const unitPrice=s=>+s.price||Math.round((+s.sum||0)/(+s.qty||1));
-  const costOf=s=>{if(+s.cost>0)return +s.cost;const m=batchMatcher()(s.product,unitPrice(s),s.point);return m&&+m.it.cp>0?+m.it.cp:0};
+  // себестоимость очковых линз (за пару): Сергели — из журнала точки (расход «за линзы» дня делится на проданные в этот день пары),
+  // остальные — по правилам settings/lensCost (вид по названию продажи → цена пары с НДС). Расчёт предварительный.
+  let lensCfg=null,lensRules=[],lensDayCache=null;
+  function setLensCfg(d){lensCfg=d||null;lensRules=((d&&d.rules)||[]).map(r=>{try{return {k:r.k,re:new RegExp(r.re,"i"),pair:r.pair==null?null:+r.pair,src:r.src||""}}catch(e){return null}}).filter(Boolean);lensDayCache=null}
+  const lensRule=s=>{const t=String(s.product||"").toLowerCase();return lensRules.find(r=>r.re.test(t))||null};
+  function sgLensDay(d){
+    if(!lensDayCache){const ex={},n={};dayExp.forEach(e=>{if(e.branch==="Сергели"&&/линз/i.test(e.name||"")&&!/доставк/i.test(e.name||""))ex[e.date]=(ex[e.date]||0)+(typeof e.fact==="number"?e.fact:+e.amount||0)});
+      sales.forEach(s=>{if(s.point==="Сергели"&&s.cat==="Очковые линзы"&&(+s.qty||0)>0)n[s.date]=(n[s.date]||0)+(+s.qty||0)});lensDayCache={ex,n}}
+    const c=lensDayCache;return c.n[d]&&c.ex[d]?c.ex[d]/c.n[d]:null}
+  const lensCostOf=s=>{if(s.cat!=="Очковые линзы")return null;if(s.point==="Сергели"&&lensCfg&&lensCfg.sergeli==="journal")return sgLensDay(s.date);const r=lensRule(s);return r&&r.pair>0?r.pair:null};
+  const costOf=s=>{if(+s.cost>0)return +s.cost;{const lc=lensCostOf(s);if(lc!=null)return lc}const m=batchMatcher()(s.product,unitPrice(s),s.point);return m&&+m.it.cp>0?+m.it.cp:0};
   function marginOf(l){let rev=0,cogs=0,all=0;l.forEach(s=>{all+=+s.sum||0;const c=costOf(s);if(c){rev+=+s.sum||0;cogs+=c*(+s.qty||0)}});return {rev,cogs,gross:rev-cogs,m:rev?(rev-cogs)/rev:null,cover:all?rev/all:0}}
 
   // ===================== вкладка «Аналитика» =====================
@@ -3506,7 +3517,7 @@ window.SaifXL=(function(){
     if(on(26)&&window.__kassa&&window.__kassaFor&&(r.to||"").slice(0,7)<window.__kassa.month){const pm=r.to.slice(0,7),x=window.__kassaFor(pm);cards+=CARD("Касса за "+["январь","февраль","март","апрель","май","июнь","июль","август","сентябрь","октябрь","ноябрь","декабрь"][+pm.slice(5,7)-1],"сдана ✓",`Б/Ч ${fmt(x.bcT)} − расходы ${fmt(x.sOp+x.sOth)} = ${fmt(x.expected)} сум`,"","")}
     else if(on(26)){const k=window.__kassa;const km=k&&k.month?MONTHS[+k.month.slice(5,7)-1]:"";cards+=k&&k.actual!=null?CARD(k.diff>=0?"Излишек в кассе":"Недостача в кассе",fmt(Math.abs(k.diff))+" сум",`за ${km}, на сегодня · должно ${fmt(k.expected)} · факт ${fmt(k.actual)}`,"",k.diff>=0?"":"warnc"):CARD("Должно быть на руках",k?fmt(k.expected)+" сум":"—",`касса за ${km}, на сегодня · пересчитайте кассу на вкладке «Касса»`)}
     if(on(35)){const chk={};list.forEach(s=>{const o=chk[checkKey(s)]||(chk[checkKey(s)]={f:0,l:0});if(isFrame(s))o.f=1;if(isLens(s))o.l=1});const fr=Object.values(chk).filter(o=>o.f),both=fr.filter(o=>o.l).length;cards+=CARD("Оправа + линзы в одном чеке",fr.length?pctF(both/fr.length):"—",`${both} из ${fr.length} ${pl(fr.length,"чека","чеков","чеков")} с оправой`,fr.length?C.ring(both/fr.length,"var(--p3)"):"")}
-    if(on(36))cards+=CARD("Валовая прибыль",mg.rev?fmt(mg.gross)+" сум":"—",mg.rev?`посчитано по ${pctF(mg.cover)} выручки, где известна цена покупки`:"нет цен покупки: пришлите список «Все товары»");
+    if(on(36))cards+=CARD("Валовая прибыль",mg.rev?fmt(mg.gross)+" сум":"—",mg.rev?`посчитано по ${pctF(mg.cover)} выручки, где известна цена покупки${lensRules.length?" · линзы — предварительно, расчёт идёт":""}`:"нет цен покупки: пришлите список «Все товары»");
     if(on(37))cards+=CARD("Маржа",mg.m!=null?pctF(mg.m):"—",mg.rev?`выручка ${fmtM(mg.rev)} · себестоимость ${fmtM(mg.cogs)}`:"нет цен покупки",mg.m!=null?C.ring(mg.m,"var(--plus)"):"");
     if(on(40))cards+=CARD("Скидки",fmt(a.disc)+" сум",cmp(a.disc,pa&&pa.disc));
     if(on(41))cards+=CARD("Скидка от выручки",a.rev?((a.disc/(a.rev+a.disc))*100).toFixed(1).replace(".",",")+"%":"—","от суммы без скидок");
@@ -3658,6 +3669,28 @@ window.SaifXL=(function(){
     $("lnTable").innerHTML=`<thead><tr><th>Вид</th><th>Индекс</th><th>Покрытие</th>${settings.points.map(p=>`<th class="r">${esc(p)}</th>`).join("")}<th class="r">Всего, шт</th><th class="r">Выручка</th><th class="r">Ср. цена</th></tr></thead><tbody>`+
       tl.map(o=>`<tr><td>${esc(o.t)}</td><td class="num">${esc(o.i)}</td><td>${esc(o.c)}</td>${settings.points.map(p=>`<td class="r num">${o.pts[p]||'<span class="srcs">—</span>'}</td>`).join("")}<td class="r num"><b>${o.u}</b></td><td class="r num">${fmt(o.r)}</td><td class="r num">${fmt(o.u?o.r/o.u:0)}</td></tr>`).join("")+
       `</tbody><tfoot><tr><td colspan="3"><b>Итого</b></td>${settings.points.map(p=>`<td class="r num"><b>${rows.filter(x=>x.s.point===p).reduce((q,x)=>q+(+x.s.qty||0),0)||""}</b></td>`).join("")}<td class="r num"><b>${la.units}</b></td><td class="r num"><b>${fmt(la.rev)}</b></td><td class="r num"><b>${fmt(la.unitPrice)}</b></td></tr></tfoot>`;
+    renderLensCost(rows);
+  }
+  // маржа по видам линз и цены пары (settings/lensCost); пока расчёт предварительный
+  function renderLensCost(rows){
+    const el=$("lnCostPanel");if(!el)return;el.hidden=!lensRules.length;if(!lensRules.length)return;
+    const m={};let revAll=0,revC=0,cogs=0;
+    rows.forEach(x=>{const s=x.s,q=+s.qty||0,r=+s.sum||0;revAll+=r;
+      const k=s.point==="Сергели"&&lensCfg&&lensCfg.sergeli==="journal"?"Сергели (по журналу)":((lensRule(s)||{}).k||"Тип не указан");
+      const c=lensCostOf(s),o=m[k]||(m[k]={k,u:0,r:0,c:0,kr:0,has:false});o.u+=q;o.r+=r;if(c!=null&&c>0){o.c+=c*q;o.kr+=r;o.has=true;revC+=r;cogs+=c*q}});
+    const list=Object.values(m).sort((a,b)=>b.r-a.r),gp=revC-cogs;
+    const row=o=>`<tr><td>${esc(o.k)}</td><td class="r num">${fmt(o.u)}</td><td class="r num">${fmt(o.r)}</td><td class="r num">${o.has?fmt(o.c):'<span class="srcs">нет цены</span>'}</td><td class="r num">${o.has?fmt(o.kr-o.c):"—"}</td><td class="r num">${o.has&&o.kr?pctF((o.kr-o.c)/o.kr):"—"}</td></tr>`;
+    const rules=(lensCfg&&lensCfg.rules)||[];
+    el.innerHTML=`<div class="head" style="margin-bottom:6px"><div><h2>Маржа по видам линз <span class="pill rsv">предварительно</span></h2>
+      <p class="note">Расчёт ещё идёт: себестоимость линз сверяется с документами поставщиков. Цена пары с НДС. Сергели — по журналу точки (расход «за линзы» дня делится на проданные пары).</p></div></div>
+      <div class="kpis" style="margin:8px 0 12px">${CARD("Прибыль с линз",fmt(gp)+" сум",`выручка ${fmtM(revC)} − себестоимость ${fmtM(cogs)}`)}${CARD("Маржа на линзах",revC?pctF(gp/revC):"—",`посчитано по ${pctF(revAll?revC/revAll:0)} выручки с линз`)}</div>
+      <div class="tbl"><table><thead><tr><th>Вид</th><th class="r">Пар</th><th class="r">Выручка</th><th class="r">Себестоимость</th><th class="r">Прибыль</th><th class="r">Маржа</th></tr></thead><tbody>${list.map(row).join("")}</tbody></table></div>
+      <details style="margin-top:14px"><summary><b>Цены пары по видам</b> <span class="srcs">· можно поправить</span></summary>
+      <div class="tbl" style="margin-top:8px"><table><thead><tr><th>Вид</th><th class="r">Цена пары, сум</th><th>Откуда цена</th></tr></thead><tbody>${rules.map((r,i)=>`<tr><td>${esc(r.k)}</td><td class="r"><input class="factin num" data-lr="${i}" inputmode="numeric" value="${r.pair>0?fmt(r.pair):""}" placeholder="нет цены" aria-label="Цена пары: ${esc(r.k)}"></td><td class="srcs">${esc(r.src||"")}</td></tr>`).join("")}</tbody></table></div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:10px"><button type="button" id="lrSave">Сохранить цены</button><span class="msg" id="lrMsg" role="status"></span></div></details>`;
+    el.querySelectorAll("[data-lr]").forEach(inp=>inp.addEventListener("input",()=>{const v=String(inp.value).replace(/\D/g,"");inp.value=v?fmt(+v):""}));
+    const b=$("lrSave");if(b)b.onclick=async()=>{const nr=rules.map((r,i)=>{const inp=el.querySelector(`[data-lr="${i}"]`);const v=inp?String(inp.value).replace(/\D/g,""):"";return Object.assign({},r,{pair:v?+v:null})});
+      try{if(mode==="db")await db.doc("settings/lensCost").set(Object.assign({},lensCfg,{rules:nr,updatedAt:Date.now()}));else setLensCfg(Object.assign({},lensCfg,{rules:nr}));$("lrMsg").textContent="Сохранено";renderLens()}catch(e){$("lrMsg").textContent="Не удалось сохранить"}};
   }
 
   // ===================== вкладка «Новая партия» =====================
@@ -4156,7 +4189,7 @@ window.SaifXL=(function(){
   $("rpPickGo").onclick=()=>rpExport([...rpSel],$("rpPickGo"),false);
 
   function renderAll(){
-    C.fitW=0;
+    C.fitW=0;lensDayCache=null;
     if(tab==="kassa"||tab==="help")return;
     fillMonths();
     const r=rangeOf(filtered());
@@ -4443,7 +4476,8 @@ window.SaifXL=(function(){
     const docs=s=>s.docs.map(d=>Object.assign({},d.data(),{id:d.id}));
     db.collection("photos").onSnapshot(s=>{photos=docs(s);renderPhotos()},()=>{});
     db.collection("sales").onSnapshot(s=>{if(mode!=="db")return;sales=docs(s);updateDatalist();renderAll();renderPhotos()},()=>{$("salesStatus").textContent="Нет связи с хранилищем"});
-    db.collection("entries").onSnapshot(s=>{dayExp=docs(s).filter(e=>e.source==="day"&&e.type!=="inc");renderAll()},()=>{});
+    db.collection("entries").onSnapshot(s=>{dayExp=docs(s).filter(e=>e.source==="day"&&e.type!=="inc");lensDayCache=null;renderAll()},()=>{});
+    db.doc("settings/lensCost").onSnapshot(s=>{setLensCfg(s.exists?s.data():null);renderAll()},()=>{});
     db.collection("batches").onSnapshot(s=>{batches=docs(s);matcherCache=null;renderAll()},()=>{});
     db.collection("stock").onSnapshot(s=>{stockParts=docs(s);matcherCache=null;renderAll()},()=>{});
     db.collection("report").onSnapshot(s=>{repDocs={};s.docs.forEach(d=>{repDocs[d.id]=Object.assign({},d.data())});if(tab==="report")renderReport()},()=>{});
