@@ -55,7 +55,7 @@ const STOCK_CAT: Record<string, string> = { "Оправы": "Оправы", "Д�
 function saleCat(bzCat: string, name: string, stockC?: string): string {
   if (stockC && STOCK_CAT[stockC]) return STOCK_CAT[stockC];
   const n = name.toLowerCase(), c = String(bzCat || "").toLowerCase();
-  if (c.includes("линз") || n.startsWith("линз")) return "Очковые линзы";
+  if (c.includes("линз") || /^(линз|linza|linz)/.test(n)) return "Очковые линзы";
   if (c.includes("футляр") || /futlyar|футляр|trenajor/.test(n)) return "Аксессуары";
   if (/s\/z|с\/з|солнц/.test(n)) return "Солнцезащитные очки";
   if (/detsk|kids|дет/.test(n)) return "Детские оправы";
