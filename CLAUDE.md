@@ -65,6 +65,8 @@
 Не отдавать помощникам: запись в базу, git push, сообщения от имени владельца, решения по деньгам.
 Мелочь (один запрос, одна правка) — делать самой, без помощника: запуск помощника тоже стоит токенов.
 Сборка на Windows: `powershell -File dev\build.ps1 -Test`.
+Выкладка серверной функции: правка `supabase/functions/<имя>/index.ts`, затем `powershell -File dev\deploy-fn.ps1 <имя>`
+(Supabase CLI в `~/.local/supabase`, вход один раз `supabase login`). Не передавать код функции целиком через MCP — это дорого.
 
 ## Код
 `index.html` собирается из `dev/` — см. `dev/README.md`: `bash dev/build.sh`,
