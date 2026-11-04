@@ -1,102 +1,170 @@
 /* ===== Платежи ===== */
-.pay-demo{font-size:13px;vertical-align:6px;margin-left:6px;letter-spacing:0}
 .pay-hact{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-#payBody .fm-legend i.late{background:var(--minus)}
-#payBody .fm-legend i.none{box-shadow:inset 0 0 0 1.5px var(--muted)}
-.kpi.pay-kok .v{color:var(--plus)}
-.kpi.pay-kleft .v{color:var(--accent)}
-.pay-sum{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-weight:650;font-size:15px;white-space:nowrap;padding:6px 12px;border-radius:999px;background:var(--wash)}
-/* значок категории */
-.pay-ic{flex:none;display:inline-grid;place-items:center;width:38px;height:38px;border-radius:12px;background:color-mix(in srgb,var(--cc) 15%,transparent);color:var(--cc)}
-.pay-ic svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.pay-ic.sm{width:30px;height:30px;border-radius:10px}
-.pay-ic.sm svg{width:17px;height:17px}
-h2 .pay-ic.sm{vertical-align:-8px;margin-right:9px}
-/* дни месяца */
-.pay-days{margin-bottom:12px}
-.pay-days .rp-day{width:52px}
-.pay-days .rp-day.pay-empty{opacity:.42;cursor:default}
-.pay-days .rp-day.pay-empty:hover{transform:none}
-.pay-days .rp-day i{background:transparent}
-.pay-days .rp-day i.none{box-shadow:inset 0 0 0 1.5px var(--muted)}
-.pay-days .rp-day i.late{background:var(--minus)}
-.pay-days .rp-day.pay-today{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 30%,transparent)}
-.pay-days .rp-day.pay-today small{color:var(--accent);font-weight:600}
-/* таблица */
-.pay-tbl tr.tap{cursor:pointer}
-.pay-tbl tr.tap:hover>td{background:var(--wash)}
-.pay-tbl tr.pay-sel>td{background:color-mix(in srgb,var(--accent) 8%,transparent)}
-.pay-tbl tr.pay-late>td:first-child{box-shadow:inset 3px 0 0 var(--minus)}
-.pay-tbl tfoot td{font-weight:650}
-.pay-nm{display:flex;align-items:center;gap:10px;min-width:0}
-.pay-nm>span{display:flex;flex-direction:column;min-width:0;line-height:1.3}
-.pay-nm b{font-weight:600}
-.pay-nm small{font-size:12px;color:var(--muted)}
-.pay-est{display:block;font-size:11px;color:var(--muted);font-family:var(--f-ui);font-weight:500}
-.pay-detr>td{background:var(--wash)!important;padding:14px 16px!important}
-.pay-det{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:18px}
-@media (max-width:760px){.pay-det{grid-template-columns:1fr}}
-.pay-det h3{font-size:14px;margin:0 0 8px}
-.pay-det .note{margin:6px 0 0}
-.pay-acts{display:flex;flex-direction:column;gap:10px;align-items:stretch}
-.pay-acts .rp-in{font-size:15px}
-.pay-empty-st{display:flex;gap:14px;align-items:center;padding:18px;border-radius:16px;background:var(--wash)}
-.pay-empty-st>div{display:flex;flex-direction:column;gap:3px}
-.pay-empty-st span{font-size:13.5px;color:var(--muted);line-height:1.45}
-.pay-none{margin:0}
-/* ближайшая неделя */
-.pay-chips{display:flex;gap:10px;flex-wrap:wrap}
-.pay-chip{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 14px 9px 9px;border-radius:16px;background:var(--surface);border:1px solid var(--line);transition:transform .25s cubic-bezier(.22,1,.36,1),box-shadow .25s}
-.pay-chip:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(30,40,90,.08)}
-.pay-chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.pay-chip>span{display:flex;flex-direction:column;line-height:1.3}
-.pay-chip b{font-size:14px;font-weight:600}
-.pay-chip small{font-size:12px;color:var(--muted);font-family:var(--f-num)}
-.pay-chip.late{border-color:color-mix(in srgb,var(--minus) 45%,var(--line));background:var(--minus-soft)}
-.pay-chip.today{border-color:color-mix(in srgb,var(--warn) 45%,var(--line))}
-/* карточки */
-.pay-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-@media (max-width:1180px){.pay-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:620px){.pay-cards{grid-template-columns:1fr}}
-.pay-card{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:8px;padding:15px 16px;border-radius:18px;min-width:0;
-  background:var(--surface);border:1px solid var(--line);color:var(--ink);font-size:14px;position:relative;overflow:hidden;
-  transition:transform .3s cubic-bezier(.22,1,.36,1),box-shadow .3s,border-color .3s}
-.pay-card::before{content:"";position:absolute;inset:0 0 auto;height:4px;background:var(--cc)}
-.pay-card:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(30,40,90,.10)}
-.pay-card:active{transform:scale(.985)}
-.pay-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.pay-card.on{border-color:var(--cc);box-shadow:0 0 0 3px color-mix(in srgb,var(--cc) 22%,transparent)}
-.pay-card.off{background:var(--wash);opacity:.75}
-.pay-ch{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.pay-cn{font-size:15px;font-weight:650;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.pay-cv{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
-.pay-cv .num{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:21px;font-weight:650;letter-spacing:-.01em}
-.pay-cv small{font-size:12px;color:var(--muted)}
-.pay-cm{display:flex;flex-direction:column;gap:2px;font-size:12.5px;color:var(--muted);margin-top:auto}
-.pay-bar{height:8px;border-radius:999px;background:var(--wash);overflow:hidden}
-.pay-bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--plus),color-mix(in srgb,var(--plus) 70%,#fff));transition:width .5s cubic-bezier(.22,1,.36,1)}
-.pay-new{align-items:flex-start;justify-content:center;background:transparent;border-style:dashed;--cc:transparent;color:var(--muted);min-height:150px}
-.pay-new::before{display:none}
-.pay-new b{color:var(--ink);font-size:15px}
-.pay-new small{font-size:12.5px}
-.pay-plus{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:var(--accent-soft);color:var(--accent);font-size:20px;font-weight:600}
-/* редактор */
-.pay-ed{border-color:color-mix(in srgb,var(--cc) 45%,var(--line))}
-.pay-frow{margin-bottom:14px}
-.pay-cats{display:flex;gap:8px;flex-wrap:wrap}
-.pay-cat{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:8px;padding:5px 13px 5px 5px;border-radius:14px;border:1px solid var(--line);background:var(--surface);font-size:13.5px;font-weight:500;transition:border-color .2s,box-shadow .2s,background .2s}
-.pay-cat:hover{border-color:color-mix(in srgb,var(--cc) 50%,var(--line))}
-.pay-cat:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.pay-cat.on{border-color:var(--cc);background:color-mix(in srgb,var(--cc) 10%,var(--surface));box-shadow:0 0 0 3px color-mix(in srgb,var(--cc) 18%,transparent);font-weight:600}
-.pay-ed .fm-f3{margin-bottom:12px}
-.pay-ed .rp-fld .seg{align-self:flex-start}
-.pay-ed select.rp-in{font-family:var(--f-ui);font-size:15px}
-.pay-ed input[type="text"].rp-in{font-family:var(--f-ui);font-size:15px}
-.pay-tgl{align-self:center}
-.pay-msg{align-self:center;font-size:13px;color:var(--minus)}
-.pay-pays{margin:4px 0 6px;padding:14px;border-radius:14px;background:var(--wash)}
-.pay-pays h3{font-size:14px;margin:0 0 8px}
-.pay-addpay{display:grid;grid-template-columns:150px 1fr 1.4fr auto;gap:8px;margin-top:10px}
-.pay-addpay .rp-in{font-size:14px;padding:9px 11px}
-@media (max-width:760px){.pay-addpay{grid-template-columns:1fr 1fr}}
-.pay-xs{padding:2px 7px!important;font-size:12px;border-radius:8px}
+.py-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.py-month{display:flex;align-items:center;gap:10px}
+.py-month b{font-size:20px;font-weight:650;min-width:150px;text-align:center}
+.py-arw{width:38px;height:38px;padding:0!important;border-radius:50%!important;font-size:20px;line-height:1;display:inline-grid;place-items:center}
+.py-now{margin-left:4px}
+.py-demo{font-size:12.5px;color:var(--warn);background:var(--warn-soft);padding:6px 12px;border-radius:999px}
+.kpi.py-kok .v{color:var(--plus)}
+.py-kpis .kv2{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.py-ring{width:40px;height:40px;flex:none}
+.py-ring circle{fill:none;stroke-width:4.5}
+.py-ring .bg{stroke:var(--wash)}
+.py-ring .fg{stroke-linecap:round;transition:stroke-dasharray .5s cubic-bezier(.22,1,.36,1)}
+/* значки статей — спокойные, один цвет */
+.py-ic{flex:none;display:inline-grid;place-items:center;width:38px;height:38px;border-radius:12px;background:var(--wash);color:var(--ink)}
+.py-ic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.8}
+.py-ic.sm{width:32px;height:32px;border-radius:10px}.py-ic.sm svg{width:17px;height:17px}
+.py-ic.xs{width:24px;height:24px;border-radius:8px}.py-ic.xs svg{width:14px;height:14px}
+/* раскладка */
+.py-grid{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;align-items:start}
+@media (max-width:1180px){.py-grid{grid-template-columns:1fr}}
+.py-side{display:flex;flex-direction:column;gap:16px}
+.py-card h3{font-size:15px;margin:0 0 12px}
+/* список платежей месяца */
+.py-list{display:flex;flex-direction:column}
+.py-hd,.py-row,.py-ft{display:grid;grid-template-columns:52px minmax(0,1fr) 128px 128px 158px;gap:10px;align-items:center}
+.py-ft>span:first-child{grid-column:span 2}
+.py-main .rp-ph button,.py-set .rp-ph button{white-space:nowrap}
+.py-main .rp-ph{padding-right:34px}
+.py-hd{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:0 8px 8px;border-bottom:1px solid var(--line)}
+.py-hd .r,.py-row .r,.py-ft .r{text-align:right;justify-self:end}
+.py-wk{display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;color:var(--muted);padding:14px 8px 6px}
+.py-wk span:last-child{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.py-row{padding:8px;border-radius:14px;transition:background .2s}
+.py-row:hover{background:var(--wash)}
+.py-row.sel{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.py-row.now .py-day{box-shadow:0 0 0 2px var(--accent)}
+.py-day{all:unset;box-sizing:border-box;cursor:pointer;width:46px;height:46px;border-radius:14px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.py-day b{font-size:17px;font-weight:650;font-variant-numeric:tabular-nums}
+.py-day small{font-size:10.5px;color:var(--muted)}
+.py-row.late .py-day{border-color:color-mix(in srgb,var(--minus) 45%,var(--line))}
+.py-row.ok .py-day{opacity:.7}
+.py-nm{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:10px;min-width:0}
+.py-nm>span{display:flex;flex-direction:column;min-width:0;line-height:1.3}
+.py-nm b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.py-nm small{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.py-day:focus-visible,.py-nm:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:12px}
+.py-am,.py-pd{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.py-am small,.py-pd small{font-size:11px;color:var(--muted)}
+.py-reset{all:unset;cursor:pointer;font-size:11px;color:var(--accent);font-weight:600}
+.py-row.ok .py-pd .py-inl{color:var(--plus)}
+/* поле, которое правится на месте */
+.py-inl{width:100%;max-width:140px;text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:15px;font-weight:600;color:var(--ink);background:transparent;border:1px solid transparent;border-radius:10px;padding:5px 8px;min-height:0;box-shadow:none;transition:background .2s,border-color .2s}
+.py-inl:hover{background:var(--wash);border-color:var(--line)}
+.py-inl:focus{background:var(--surface);border-color:var(--accent);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+.py-inl::placeholder{color:var(--muted);font-weight:500}
+.py-inl.sm{max-width:90px;font-size:14px}.py-inl.xs{max-width:46px;text-align:center;font-size:14px}
+.py-inl.py-txt{text-align:left;max-width:none;font-family:var(--f-ui);font-weight:600}
+.py-inl.py-date{max-width:160px;text-align:left;font-family:var(--f-ui);font-size:14px}
+/* статус */
+.py-chip{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap;background:var(--wash);color:var(--muted);transition:filter .2s,transform .2s}
+.py-chip:hover{filter:brightness(.97);transform:translateY(-1px)}
+.py-chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.py-chip i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.py-chip.ok{background:var(--plus-soft);color:var(--plus)}
+.py-chip.part,.py-chip.today{background:var(--warn-soft);color:var(--warn)}
+.py-chip.late{background:var(--minus-soft);color:var(--minus)}
+.py-chip.soon i{background:transparent;box-shadow:inset 0 0 0 1.5px currentColor}
+.py-ft{grid-template-columns:minmax(0,1fr) 128px 128px 158px;padding:12px 8px 2px;margin-top:6px;border-top:1px solid var(--line);font-weight:650}
+.py-ft>span:first-child{grid-column:auto}
+.py-ft .r{font-family:var(--f-num);font-variant-numeric:tabular-nums;padding-right:8px}
+/* подробности строки */
+.py-det{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;margin:2px 0 8px 62px;padding:12px 14px;border-radius:14px;background:var(--wash)}
+.py-det h4{font-size:13px;margin:0 0 6px}
+.py-det .note{margin:4px 0 0}
+.py-dl{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid var(--line);font-size:13px}
+.py-dl:last-child{border-bottom:0}
+.py-dl em{font-style:normal;color:var(--muted)}
+.py-dl b{font-family:var(--f-num);font-weight:600;white-space:nowrap}
+.py-dact{display:flex;align-items:flex-start}
+.py-empty{display:flex;gap:14px;align-items:center;padding:18px;border-radius:16px;background:var(--wash)}
+.py-empty>div{display:flex;flex-direction:column;gap:3px}
+.py-empty span{font-size:13.5px;color:var(--muted);line-height:1.45}
+/* боковые карточки */
+.py-mini{display:flex;flex-direction:column;gap:4px}
+.py-mi{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px;border-radius:12px;transition:background .2s}
+.py-mi:hover{background:var(--wash)}
+.py-mi>span:nth-child(2){display:flex;flex-direction:column;min-width:0;line-height:1.3}
+.py-mi b{font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.py-mi small{font-size:12px;color:var(--muted)}
+.py-mi .num{font-family:var(--f-num);font-size:13.5px}
+.py-dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.py-mi.late .py-dot{background:var(--minus)}.py-mi.today .py-dot,.py-mi.part .py-dot{background:var(--warn)}
+.py-sum{display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:13.5px}
+.py-sum b{font-family:var(--f-num)}
+.py-debt{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:6px;width:100%;padding:10px 12px;border-radius:14px;border:1px solid var(--line);margin-bottom:8px;transition:border-color .2s,background .2s}
+.py-debt:hover{background:var(--wash)}
+.py-dh{display:flex;justify-content:space-between;gap:8px;font-size:13.5px}
+.py-dh .num{font-family:var(--f-num);font-weight:650;white-space:nowrap}
+.py-debt small{font-size:12px;color:var(--muted)}
+.py-bar{display:block;height:7px;border-radius:999px;background:var(--wash);overflow:hidden}
+.py-bar i{display:block;height:100%;border-radius:inherit;background:var(--plus)}
+.py-wide{width:100%}
+.py-cats{display:flex;flex-direction:column;gap:9px}
+.py-cr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center;font-size:13px}
+.py-cr>span:first-child{display:flex;align-items:center;gap:8px}
+.py-cr .num{font-family:var(--f-num);font-weight:600}
+.py-cb{grid-column:1/-1;height:5px;border-radius:999px;background:var(--wash);overflow:hidden}
+.py-cb i{display:block;height:100%;background:var(--accent);opacity:.7;border-radius:inherit}
+/* настройка платежей */
+.py-sh{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.py-set-l{display:flex;flex-direction:column}
+.py-set .rp-ph{padding-right:34px}
+.py-sr{display:grid;grid-template-columns:minmax(0,1fr) 230px 110px 124px 64px 40px;gap:10px;align-items:center;padding:6px 8px;border-radius:12px}
+.py-sr:hover{background:var(--wash)}
+.py-sr.off{opacity:.55}
+.py-shd{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);border-radius:0;padding-bottom:8px}
+.py-shd:hover{background:none}
+.py-sr .r{text-align:right;justify-self:end}
+.py-nm2{display:flex;align-items:center;gap:8px;min-width:0}
+.py-usd,.py-auto,.py-dd{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--muted);white-space:nowrap}
+.py-sel{font-size:13.5px;padding:6px 8px;border-radius:10px;min-height:0;width:100%;max-width:120px;min-width:0}
+.py-more{font-size:18px;padding:4px 8px!important;border-radius:10px;line-height:1}
+@media (max-width:900px){
+  .py-hd{display:none}
+  .py-row{grid-template-columns:46px minmax(0,1fr) auto;grid-template-areas:"d n s" "d a p"}
+  .py-row>.py-day{grid-area:d}.py-row>.py-nm{grid-area:n}.py-row>span:nth-child(5){grid-area:s;justify-self:end}
+  .py-row>.py-am{grid-area:a;align-items:flex-start}.py-row>.py-pd{grid-area:p}
+  .py-row .py-inl{text-align:left}
+  .py-ft{grid-template-columns:1fr auto auto}.py-ft>span:last-child{display:none}
+  .py-det{margin-left:0;grid-template-columns:1fr}
+  .py-sr{grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"n n t" "a d s"}
+  .py-shd{display:none}
+  .py-sr>span:nth-child(1){grid-area:n}.py-sr>span:nth-child(2){grid-area:a;justify-self:start}.py-sr>span:nth-child(3){grid-area:d}
+  .py-sr>span:nth-child(4){grid-area:s}.py-sr>span:nth-child(5){grid-area:t}.py-sr>span:nth-child(6){display:none}
+}
+/* боковая панель настроек */
+.py-ov{position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:90;animation:pyFade .2s}
+.py-drawer{position:fixed;top:12px;right:12px;bottom:12px;width:min(460px,calc(100vw - 24px));z-index:91;display:flex;flex-direction:column;border-radius:24px;
+  background:var(--surface);border:1px solid var(--line);box-shadow:0 24px 60px rgba(0,0,0,.28);transform:translateX(30px);opacity:0;transition:transform .28s cubic-bezier(.22,1,.36,1),opacity .2s}
+.py-drawer.on{transform:none;opacity:1}
+@keyframes pyFade{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){.py-drawer{transition:none}.py-ov{animation:none}}
+.py-dhd{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}
+.py-dhd>div{display:flex;align-items:center;gap:12px;min-width:0}
+.py-dhd h3{font-size:17px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.py-dhd small{font-size:12.5px;color:var(--muted)}
+.py-x{font-size:16px;line-height:1;padding:8px 10px!important;border-radius:10px}
+.py-dbody{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.py-f{display:flex;flex-direction:column;gap:6px;min-width:0}
+.py-f>span{font-size:12.5px;color:var(--muted);font-weight:500}
+.py-f>small{font-size:12px;color:var(--muted)}
+.py-f .rp-in{font-size:15px;padding:10px 12px}
+.py-f input[type="text"].rp-in,.py-f select.rp-in{font-family:var(--f-ui)}
+.py-f .seg{align-self:flex-start}
+.py-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.py-cats2{display:flex;flex-wrap:wrap;gap:6px}
+.py-cat{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:4px 11px 4px 4px;border-radius:12px;border:1px solid var(--line);font-size:13px;transition:border-color .2s,background .2s}
+.py-cat:hover{border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+.py-cat.on{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+.py-cat:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.py-tgl{align-self:flex-start}
+.py-pays{padding:12px 14px;border-radius:14px;background:var(--wash)}
+.py-pays h4{font-size:13.5px;margin:0 0 6px}
+.py-addpay{display:grid;grid-template-columns:150px 1fr auto;gap:8px;margin-top:10px}
+.py-addpay .rp-in{font-size:14px;padding:8px 10px}
+.py-xs{padding:2px 7px!important;font-size:12px;border-radius:8px}
+.py-dft{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:14px 18px;border-top:1px solid var(--line)}
+.py-msg{font-size:13px;color:var(--minus)}

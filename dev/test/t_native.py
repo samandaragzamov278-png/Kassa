@@ -16,7 +16,7 @@ with sync_playwright() as pw:
     def chk(name):
         p.wait_for_timeout(700);r=p.evaluate(CHK)
         if r:rep[name]=r
-    for t in ["home","kassa","report","sales","recon","analytics","plan","lens","batch","help"]:
+    for t in ["home","kassa","report","pay","sales","recon","analytics","plan","lens","batch"]:
         p.evaluate(f'document.querySelector(\'.tab[data-tab="{t}"]\').click()');chk(t)
         if t=="report":
             p.evaluate('document.getElementById("rsAdd").click()');chk("report/открыт ввод")

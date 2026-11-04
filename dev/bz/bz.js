@@ -17,8 +17,9 @@
   const wd=s=>WD[new Date(s+"T12:00:00Z").getUTCDay()];
   const hm=t=>t?new Date(t).toLocaleTimeString("ru-RU",{timeZone:"Asia/Tashkent",hour:"2-digit",minute:"2-digit"}):"";
   const dtm=t=>t?new Date(t).toLocaleString("ru-RU",{timeZone:"Asia/Tashkent",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}).replace(",",""):"—";
-  const POINTS=["Премиум","Яшнабад","Сергели","C1"];
-  const PLACES=["Склад","Премиум","Яшнабад","Сергели","C1"];
+  // Премиум и Яшнабад — после инвентаризации; пока сверяются и считаются только точки, чьи продажи приходят из Billz, и Склад
+  const POINTS=["Сергели","C1"];
+  const PLACES=["Склад","Сергели","C1"];
   const AUTO=new Set(["Сергели"]);           // точки, чьи продажи Касса берёт из Billz сама
   const isLens=c=>/линз/i.test(c||"");
   const isRet=t=>/возврат|return/i.test(t||"");

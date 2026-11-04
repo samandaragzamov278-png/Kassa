@@ -23,7 +23,7 @@ PAGE = '''  <div class="page" id="page-pay" hidden>
     <header class="head">
       <div>
         <div class="eyebrow">Saif-Optics · обязательные платежи</div>
-        <h1>Платежи <span class="fm-pill warn pay-demo">Демо · в доработке</span></h1>
+        <h1>Платежи</h1>
         <p>Кредит, аренда, налоги, зарплаты и долги — что уже оплачено и что впереди</p>
       </div>
       <div class="pay-hact"><button type="button" class="sec" id="payXlsx">Выгрузить Excel</button><button type="button" id="payAdd">＋ Добавить платёж</button></div>

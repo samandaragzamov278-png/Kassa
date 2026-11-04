@@ -10,6 +10,7 @@ python3 patch_rs.py /tmp/kassa_work.html
 python3 patch_fm.py /tmp/kassa_work.html
 python3 patch_pay.py /tmp/kassa_work.html
 python3 patch_ui.py /tmp/kassa_work.html
+python3 patch_tidy.py /tmp/kassa_work.html
 python3 build.py /tmp/kassa_work.html ../index.html
 echo "index.html собран"
 # Карта кода для Claude (Graphify): зеркало JS из base.html и обновление графа

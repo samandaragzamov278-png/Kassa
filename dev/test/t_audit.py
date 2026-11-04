@@ -15,7 +15,7 @@ CHECK='''()=>{
  // элементы шире экрана
  document.querySelectorAll(".page:not([hidden]) *").forEach(e=>{if(!vis(e))return;const r=e.getBoundingClientRect();const clip=x=>{for(let q=x.parentElement;q&&q!==document.body;q=q.parentElement){if(getComputedStyle(q).overflowX!=="visible")return true}return false};if(r.right>W+2&&!e.closest(".tbl,.seg,.tabs,.m-chips,table")&&!clip(e))out.push("выходит за экран: "+e.tagName+"."+String(e.className).slice(0,30)+" "+Math.round(r.right))});
  return [...new Set(out)].slice(0,12)}'''
-TABS=["home","kassa","report","sales","recon","analytics","plan","lens","batch","help"]
+TABS=["home","kassa","report","pay","sales","recon","analytics","plan","lens","batch"]
 with sync_playwright() as pw:
     b=pw.chromium.launch();rep={}
     for name,vw in [("desk",(1440,950)),("lap",(1280,800)),("tab",(820,1180))]:
@@ -50,7 +50,7 @@ with sync_playwright() as pw:
         p.evaluate(f'document.querySelector(\'#mApp [data-tab="{t}"]\').click()');p.wait_for_timeout(700)
         w=p.evaluate('document.documentElement.scrollWidth-document.documentElement.clientWidth')
         if w>1:rep["phone/"+t]=["горизонтальная прокрутка "+str(w)]
-    for s in ["analytics","plan","lens","batch","billz","recon","help"]:
+    for s in ["analytics","plan","lens","batch","billz","recon"]:
         p.evaluate('document.querySelector(\'#mApp [data-tab="more"]\').click()');p.wait_for_timeout(400)
         p.evaluate(f'document.querySelector(\'[data-sub="{s}"]\').click()');p.wait_for_timeout(1200)
         w=p.evaluate('document.documentElement.scrollWidth-document.documentElement.clientWidth')

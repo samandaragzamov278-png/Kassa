@@ -1,0 +1,14 @@
+/* ===== Показ больших таблиц по страницам ===== */
+.pgbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.pg-size{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+.pg-size .seg button{min-width:40px}
+.pg-nav{display:flex;align-items:center;gap:8px}
+.pg-info{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:13px;color:var(--muted);min-width:110px;text-align:center}
+.pg-btn{width:34px;height:34px;padding:0!important;border-radius:50%!important;font-size:18px;line-height:1;display:inline-grid;place-items:center}
+.pg-btn:disabled{opacity:.35;cursor:default}
+@media (max-width:640px){.pgbar{justify-content:center}.pg-size>span{display:none}}
+/* ===== Разделы в доработке ===== */
+.wip{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;margin:0 0 16px;border-radius:16px;background:var(--warn-soft);color:var(--ink);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent)}
+.wip svg{flex:none;width:22px;height:22px;fill:none;stroke:var(--warn);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;margin-top:1px}
+.wip b{display:block;color:var(--warn);margin-bottom:2px}
+.wip span{font-size:13.5px;line-height:1.45}
