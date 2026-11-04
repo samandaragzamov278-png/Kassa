@@ -11,7 +11,7 @@ if (Test-Path $splash) { Copy-Item $splash "$d\splash\saif-splash.js" -Force }
 Copy-Item "$d\base.html" $w -Force
 Push-Location $d
 try {
-  foreach ($p in 'patch_mobile.py', 'patch_billz.py', 'patch_bz.py', 'patch_rs.py', 'patch_fm.py', 'patch_ui.py') { & $py -I $p $w | Out-Null; if ($LASTEXITCODE) { throw "$p failed" } }
+  foreach ($p in 'patch_mobile.py', 'patch_billz.py', 'patch_bz.py', 'patch_rs.py', 'patch_fm.py', 'patch_pay.py', 'patch_ui.py') { & $py -I $p $w | Out-Null; if ($LASTEXITCODE) { throw "$p failed" } }
   & $py -I build.py $w '..\index.html' | Out-Null
   & $py -I graph_src.py | Out-Null
   'сборка: ok'

@@ -1,0 +1,102 @@
+/* ===== Платежи ===== */
+.pay-demo{font-size:13px;vertical-align:6px;margin-left:6px;letter-spacing:0}
+.pay-hact{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+#payBody .fm-legend i.late{background:var(--minus)}
+#payBody .fm-legend i.none{box-shadow:inset 0 0 0 1.5px var(--muted)}
+.kpi.pay-kok .v{color:var(--plus)}
+.kpi.pay-kleft .v{color:var(--accent)}
+.pay-sum{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-weight:650;font-size:15px;white-space:nowrap;padding:6px 12px;border-radius:999px;background:var(--wash)}
+/* значок категории */
+.pay-ic{flex:none;display:inline-grid;place-items:center;width:38px;height:38px;border-radius:12px;background:color-mix(in srgb,var(--cc) 15%,transparent);color:var(--cc)}
+.pay-ic svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pay-ic.sm{width:30px;height:30px;border-radius:10px}
+.pay-ic.sm svg{width:17px;height:17px}
+h2 .pay-ic.sm{vertical-align:-8px;margin-right:9px}
+/* дни месяца */
+.pay-days{margin-bottom:12px}
+.pay-days .rp-day{width:52px}
+.pay-days .rp-day.pay-empty{opacity:.42;cursor:default}
+.pay-days .rp-day.pay-empty:hover{transform:none}
+.pay-days .rp-day i{background:transparent}
+.pay-days .rp-day i.none{box-shadow:inset 0 0 0 1.5px var(--muted)}
+.pay-days .rp-day i.late{background:var(--minus)}
+.pay-days .rp-day.pay-today{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 30%,transparent)}
+.pay-days .rp-day.pay-today small{color:var(--accent);font-weight:600}
+/* таблица */
+.pay-tbl tr.tap{cursor:pointer}
+.pay-tbl tr.tap:hover>td{background:var(--wash)}
+.pay-tbl tr.pay-sel>td{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.pay-tbl tr.pay-late>td:first-child{box-shadow:inset 3px 0 0 var(--minus)}
+.pay-tbl tfoot td{font-weight:650}
+.pay-nm{display:flex;align-items:center;gap:10px;min-width:0}
+.pay-nm>span{display:flex;flex-direction:column;min-width:0;line-height:1.3}
+.pay-nm b{font-weight:600}
+.pay-nm small{font-size:12px;color:var(--muted)}
+.pay-est{display:block;font-size:11px;color:var(--muted);font-family:var(--f-ui);font-weight:500}
+.pay-detr>td{background:var(--wash)!important;padding:14px 16px!important}
+.pay-det{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:18px}
+@media (max-width:760px){.pay-det{grid-template-columns:1fr}}
+.pay-det h3{font-size:14px;margin:0 0 8px}
+.pay-det .note{margin:6px 0 0}
+.pay-acts{display:flex;flex-direction:column;gap:10px;align-items:stretch}
+.pay-acts .rp-in{font-size:15px}
+.pay-empty-st{display:flex;gap:14px;align-items:center;padding:18px;border-radius:16px;background:var(--wash)}
+.pay-empty-st>div{display:flex;flex-direction:column;gap:3px}
+.pay-empty-st span{font-size:13.5px;color:var(--muted);line-height:1.45}
+.pay-none{margin:0}
+/* ближайшая неделя */
+.pay-chips{display:flex;gap:10px;flex-wrap:wrap}
+.pay-chip{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 14px 9px 9px;border-radius:16px;background:var(--surface);border:1px solid var(--line);transition:transform .25s cubic-bezier(.22,1,.36,1),box-shadow .25s}
+.pay-chip:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(30,40,90,.08)}
+.pay-chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pay-chip>span{display:flex;flex-direction:column;line-height:1.3}
+.pay-chip b{font-size:14px;font-weight:600}
+.pay-chip small{font-size:12px;color:var(--muted);font-family:var(--f-num)}
+.pay-chip.late{border-color:color-mix(in srgb,var(--minus) 45%,var(--line));background:var(--minus-soft)}
+.pay-chip.today{border-color:color-mix(in srgb,var(--warn) 45%,var(--line))}
+/* карточки */
+.pay-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:1180px){.pay-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:620px){.pay-cards{grid-template-columns:1fr}}
+.pay-card{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:8px;padding:15px 16px;border-radius:18px;min-width:0;
+  background:var(--surface);border:1px solid var(--line);color:var(--ink);font-size:14px;position:relative;overflow:hidden;
+  transition:transform .3s cubic-bezier(.22,1,.36,1),box-shadow .3s,border-color .3s}
+.pay-card::before{content:"";position:absolute;inset:0 0 auto;height:4px;background:var(--cc)}
+.pay-card:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(30,40,90,.10)}
+.pay-card:active{transform:scale(.985)}
+.pay-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pay-card.on{border-color:var(--cc);box-shadow:0 0 0 3px color-mix(in srgb,var(--cc) 22%,transparent)}
+.pay-card.off{background:var(--wash);opacity:.75}
+.pay-ch{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pay-cn{font-size:15px;font-weight:650;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.pay-cv{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.pay-cv .num{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:21px;font-weight:650;letter-spacing:-.01em}
+.pay-cv small{font-size:12px;color:var(--muted)}
+.pay-cm{display:flex;flex-direction:column;gap:2px;font-size:12.5px;color:var(--muted);margin-top:auto}
+.pay-bar{height:8px;border-radius:999px;background:var(--wash);overflow:hidden}
+.pay-bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--plus),color-mix(in srgb,var(--plus) 70%,#fff));transition:width .5s cubic-bezier(.22,1,.36,1)}
+.pay-new{align-items:flex-start;justify-content:center;background:transparent;border-style:dashed;--cc:transparent;color:var(--muted);min-height:150px}
+.pay-new::before{display:none}
+.pay-new b{color:var(--ink);font-size:15px}
+.pay-new small{font-size:12.5px}
+.pay-plus{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:var(--accent-soft);color:var(--accent);font-size:20px;font-weight:600}
+/* редактор */
+.pay-ed{border-color:color-mix(in srgb,var(--cc) 45%,var(--line))}
+.pay-frow{margin-bottom:14px}
+.pay-cats{display:flex;gap:8px;flex-wrap:wrap}
+.pay-cat{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:8px;padding:5px 13px 5px 5px;border-radius:14px;border:1px solid var(--line);background:var(--surface);font-size:13.5px;font-weight:500;transition:border-color .2s,box-shadow .2s,background .2s}
+.pay-cat:hover{border-color:color-mix(in srgb,var(--cc) 50%,var(--line))}
+.pay-cat:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pay-cat.on{border-color:var(--cc);background:color-mix(in srgb,var(--cc) 10%,var(--surface));box-shadow:0 0 0 3px color-mix(in srgb,var(--cc) 18%,transparent);font-weight:600}
+.pay-ed .fm-f3{margin-bottom:12px}
+.pay-ed .rp-fld .seg{align-self:flex-start}
+.pay-ed select.rp-in{font-family:var(--f-ui);font-size:15px}
+.pay-ed input[type="text"].rp-in{font-family:var(--f-ui);font-size:15px}
+.pay-tgl{align-self:center}
+.pay-msg{align-self:center;font-size:13px;color:var(--minus)}
+.pay-pays{margin:4px 0 6px;padding:14px;border-radius:14px;background:var(--wash)}
+.pay-pays h3{font-size:14px;margin:0 0 8px}
+.pay-addpay{display:grid;grid-template-columns:150px 1fr 1.4fr auto;gap:8px;margin-top:10px}
+.pay-addpay .rp-in{font-size:14px;padding:9px 11px}
+@media (max-width:760px){.pay-addpay{grid-template-columns:1fr 1fr}}
+.pay-xs{padding:2px 7px!important;font-size:12px;border-radius:8px}
