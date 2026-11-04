@@ -3,7 +3,7 @@
 Сайт `index.html` в корне собирается из этих файлов — правьте исходники, а не `index.html`.
 
 ```
-bash dev/build.sh          # собирает ../index.html
+bash dev/build.sh          # собирает ../index.html (на Windows: powershell -File dev/build.ps1 -Test — сборка + тесты)
 python3 dev/test/t_audit.py  # проверка: ошибки JS, отступы, вылезание за экран (Playwright, тестовые данные)
 ```
 
