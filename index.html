@@ -2739,7 +2739,6 @@ window.__zw=function(){return innerWidth/(window.__uiZ||1)};window.__zh=function
       <div id="anPickList"></div>
       <div class="actions" style="margin-top:12px"><button type="button" class="sec" id="anPickAll">Включить все</button><button type="button" class="sec" id="anPickDef">Выключить все</button><span class="msg" id="anPickMsg"></span></div>
     </details>
-    <div class="seg big an-grp" role="group" aria-label="Подраздел аналитики" id="anGrpSeg"></div>
     <section class="kpis" id="anCards"></section>
     <section class="wgrid" id="anWidgets"></section>
     <div class="empty" id="anEmpty" hidden>Для аналитики нужны продажи за выбранный период. Внесите их на вкладке «Продажи».</div>
@@ -4353,23 +4352,17 @@ window.SaifXL=(function(){
     ["Время",[[43,"По дням недели"],[44,"По неделям"],[45,"По месяцам"],[46,"Тепловая карта точка × день недели"],[47,"Лучший день недели каждой точки"]]],
     ["Новая партия",[[48,"Продано из партии, шт и %"],[49,"Осталось, шт и сумма"],[50,"Продажи партии по точкам"],[51,"Продажи партии по группам"],[52,"Темп продаж партии в день"],[53,"Прогноз распродажи остатка"],[54,"Модели без единой продажи"],[55,"Модели на дозаказ"],[56,"Выручка и маржа по партии"],[57,"Доля партии в общих продажах"]]]
   ];
-  // объединения: показатель → куда вошёл (отдельной плиткой больше не показывается)
-  const MERGED={2:1,3:1,7:9,8:9,11:9,13:12,15:18,16:18,21:22,24:23,25:20,28:29,37:36,41:40,42:40,47:46};
-  const ALL_IDS=METRICS.flatMap(g=>g[1].map(x=>x[0])).filter(i=>!MERGED[i]);
-  const AN_GRP=[["rev","Выручка"],["pts","Точки"],["money","Деньги"],["goods","Товары"],["profit","Прибыль"],["disc","Скидки"],["time","Время"],["batch","Партия"]];
-  const grpOf=id=>{const i=METRICS.findIndex(g=>g[1].some(x=>x[0]===id));return i<0?"":AN_GRP[i][0]};
-  let anGrp=lsGet("anGrp","rev");
+  const ALL_IDS=METRICS.flatMap(g=>g[1].map(x=>x[0]));
   let anSel=null;
   // храним выключенные показатели: всё новое по умолчанию включено
   const selSet=()=>{const off=new Set(anSel||lsGet("anOff",null)||[]);return new Set(ALL_IDS.filter(i=>!off.has(i)))};
   function renderPicker(){
     const sel=selSet();
     $("anPickCount").textContent=`· включено ${sel.size} из ${ALL_IDS.length}`;
-    $("anPickList").innerHTML=METRICS.map(([g,items])=>`<div class="pk-group"><span class="eyebrow">${g}</span><div class="pk-items">${items.filter(([id])=>!MERGED[id]).map(([id,nm])=>`<label class="tgl"><input type="checkbox" role="switch" data-mid="${id}"${sel.has(id)?" checked":""}><span class="tg" aria-hidden="true"></span><span>${esc(nm)}${MHINT[id]?`<small class="pk-hint">${MHINT[id]}</small>`:""}</span></label>`).join("")}</div></div>`).join("");
+    $("anPickList").innerHTML=METRICS.map(([g,items])=>`<div class="pk-group"><span class="eyebrow">${g}</span><div class="pk-items">${items.map(([id,nm])=>`<label class="tgl"><input type="checkbox" role="switch" data-mid="${id}"${sel.has(id)?" checked":""}><span class="tg" aria-hidden="true"></span><span>${esc(nm)}${MHINT[id]?`<small class="pk-hint">${MHINT[id]}</small>`:""}</span></label>`).join("")}</div></div>`).join("");
     $("anPickList").querySelectorAll("[data-mid]").forEach(c=>c.onchange=()=>{const s=selSet();const id=+c.dataset.mid;c.checked?s.add(id):s.delete(id);saveSel([...s].sort((a,b)=>a-b))});
   }
   async function saveSel(arr){const on=new Set(arr);const off=ALL_IDS.filter(i=>!on.has(i));anSel=off;lsSet("anOff",off);renderAnalytics();if(mode==="db"){try{await db.doc("settings/analytics3").set({off})}catch(e){}}}
-  $("anGrpSeg").addEventListener("click",e=>{const b=e.target.closest("[data-ag]");if(!b)return;anGrp=b.dataset.ag;lsSet("anGrp",anGrp);renderAnalytics()});
   $("anPickAll").onclick=()=>saveSel(ALL_IDS.slice());
   $("anPickDef").onclick=()=>saveSel([]);
 
@@ -4383,8 +4376,7 @@ window.SaifXL=(function(){
     if(tab!=="analytics")return;
     C.fitW=Math.max(0,($("anWidgets").clientWidth||0)-44);
     renderPicker();
-    const sel=selSet(), on=id=>!MERGED[id]&&sel.has(id)&&grpOf(id)===anGrp;
-    $("anGrpSeg").innerHTML=AN_GRP.map(([k,l])=>{const n=ALL_IDS.filter(i=>grpOf(i)===k&&sel.has(i)).length;return `<button type="button" data-ag="${k}" aria-pressed="${k===anGrp}">${l} <span class="srcs">${n}</span></button>`}).join("");
+    const sel=selSet(), on=id=>sel.has(id);
     const list=filtered(), a=agg(list), pv=prevList(), pa=pv?agg(pv.list):null, r=rangeOf(list), ex=expFiltered();
     $("anPeriod").textContent=list.length?`Период ${dLong(r.from)} — ${dLong(r.to)} · ${r.days} ${pl(r.days,"день","дня","дней")}`+(pv?` · сравнение с ${dLong(pv.from)} — ${dLong(pv.to)}`:" · сравнение появится, когда выбраны даты"):"";
     const empty=!list.length;$("anEmpty").hidden=!empty;$("anCards").hidden=empty;$("anWidgets").hidden=empty;
@@ -4402,7 +4394,7 @@ window.SaifXL=(function(){
     let cards="",w="";
 
     // ----- карточки -----
-    if(on(1))cards+=CARD("Выручка",fmt(a.rev)+" сум",(cmp(a.rev,pa&&pa.rev)||"")+` · в среднем ${fmtM(a.rev/r.days)} в день`+(pa&&pa.rev?` · было ${fmtM(pa.rev)}`:""),C.spark(dv),"main");
+    if(on(1))cards+=CARD("Выручка",fmt(a.rev)+" сум",cmp(a.rev,pa&&pa.rev),C.spark(dv),"main");
     if(on(2))cards+=CARD("Рост к прошлому периоду",pa&&pa.rev?(Math.round((a.rev-pa.rev)/pa.rev*100)===0?"≈ 0%":`${a.rev>=pa.rev?"+":"−"}${Math.abs(Math.round((a.rev-pa.rev)/pa.rev*100))}%`):"—",pa?(pa.rev?`было ${fmt(pa.rev)} сум за ${dShort(pv.from)}–${dShort(pv.to)}`:`за ${dShort(pv.from)}–${dShort(pv.to)} продаж нет — сравнивать не с чем`):"выберите период с датами");
     if(on(3))cards+=CARD("Выручка в среднем за день",fmt(a.rev/r.days)+" сум",`по ${r.days} календарным дням`,C.spark(dv,"var(--p3)"));
     const t=iso(new Date()), mStart=t.slice(0,8)+"01", dim=new Date(+t.slice(0,4),+t.slice(5,7),0).getDate(), el=+t.slice(8,10);
@@ -4420,19 +4412,19 @@ window.SaifXL=(function(){
       cards+=pp?CARD("План за период",fmt(pf)+" сум",`из ${fmt(pp)} по плану за ${r.from===r.to?dLong(r.from):dShort(r.from)+"–"+dShort(r.to)} · ${pctF(pf/pp)}`+(F.point!=="all"?` · ${esc(F.point)}`:"")+(noPlanM?" · месяцы без плана не учтены":""),C.ring(Math.min(1,pf/pp),pf>=pp?"var(--plus)":pf>=pp*0.85?"var(--warn)":"var(--minus)")):CARD("План за период","не задан","задайте план на вкладке «План»")}
     if(on(7))cards+=CARD("Продаж (позиций)",fmt(a.n),cmp(a.n,pa&&pa.n));
     if(on(8))cards+=CARD("Проданных единиц",fmt(a.units),cmp(a.units,pa&&pa.units));
-    if(on(9))cards+=CARD("Чеки и средний чек",fmt(a.avg)+" сум",`${fmt(a.checks)} ${pl(a.checks,"чек","чека","чеков")} · ${fmt(a.n)} ${pl(a.n,"позиция","позиции","позиций")} · ${fmt(a.units)} ед. · ${a.upc.toFixed(2).replace(".",",")} ед. в чеке · `+(cmp(a.avg,pa&&pa.avg)||""));
+    if(on(9))cards+=CARD("Средний чек",fmt(a.avg)+" сум",`${fmt(a.checks)} ${pl(a.checks,"чек","чека","чеков")} · `+(cmp(a.avg,pa&&pa.avg)||""));
     if(on(10))cards+=CARD("Средняя цена единицы",fmt(a.unitPrice)+" сум",cmp(a.unitPrice,pa&&pa.unitPrice));
     if(on(11))cards+=CARD("Единиц в одном чеке",a.upc.toFixed(2).replace(".",","),pa?`было ${pa.upc.toFixed(2).replace(".",",")}`:"");
-    if(on(12)){const ds=Object.entries(byDay).sort((x,y)=>y[1]-x[1]);const b=ds[0],wst=ds[ds.length-1];const z=days.filter(d=>!byDay[d]);cards+=CARD("Лучший день",b?fmt(b[1])+" сум":"—",(b?`${dLong(b[0])}, ${WD[wdIdx(b[0])]} · худший: ${dShort(wst[0])} — ${fmt(wst[1])}`:"")+` · дней без продаж: ${z.length}`)}
+    if(on(12)){const ds=Object.entries(byDay).sort((x,y)=>y[1]-x[1]);const b=ds[0],wst=ds[ds.length-1];cards+=CARD("Лучший день",b?fmt(b[1])+" сум":"—",b?`${dLong(b[0])}, ${WD[wdIdx(b[0])]} · худший: ${dShort(wst[0])} — ${fmt(wst[1])}`:"")}
     if(on(13)){const z=days.filter(d=>!byDay[d]);cards+=CARD("Дней без продаж",String(z.length),z.length?z.slice(0,6).map(dShort).join(", ")+(z.length>6?"…":""):"продажи были каждый день")}
     if(on(21)){const sh=a.rev?a.cash/a.rev:0;cards+=CARD("Доля наличных",pctF(sh),`безнал ${pctF(1-sh)}`+(pa&&pa.rev?` · было ${pctF(pa.cash/pa.rev)}`:""),C.ring(sh,"var(--p1)"))}
     if(on(24))cards+=CARD("Расходы дня от выручки",a.rev?(expSum/a.rev*100).toFixed(1).replace(".",",")+"%":"—",`расходы ${fmt(expSum)} сум`);
     if(on(26)&&window.__kassa&&window.__kassaFor&&(r.to||"").slice(0,7)<window.__kassa.month){const pm=r.to.slice(0,7),x=window.__kassaFor(pm);cards+=CARD("Касса за "+["январь","февраль","март","апрель","май","июнь","июль","август","сентябрь","октябрь","ноябрь","декабрь"][+pm.slice(5,7)-1],"сдана ✓",`Б/Ч ${fmt(x.bcT)} − расходы ${fmt(x.sOp+x.sOth)} = ${fmt(x.expected)} сум`,"","")}
     else if(on(26)){const k=window.__kassa;const km=k&&k.month?MONTHS[+k.month.slice(5,7)-1]:"";cards+=k&&k.actual!=null?CARD(k.diff>=0?"Излишек в кассе":"Недостача в кассе",fmt(Math.abs(k.diff))+" сум",`за ${km}, на сегодня · должно ${fmt(k.expected)} · факт ${fmt(k.actual)}`,"",k.diff>=0?"":"warnc"):CARD("Должно быть на руках",k?fmt(k.expected)+" сум":"—",`касса за ${km}, на сегодня · пересчитайте кассу на вкладке «Касса»`)}
     if(on(35)){const chk={};list.forEach(s=>{const o=chk[checkKey(s)]||(chk[checkKey(s)]={f:0,l:0});if(isFrame(s))o.f=1;if(isLens(s))o.l=1});const fr=Object.values(chk).filter(o=>o.f),both=fr.filter(o=>o.l).length;cards+=CARD("Оправа + линзы в одном чеке",fr.length?pctF(both/fr.length):"—",`${both} из ${fr.length} ${pl(fr.length,"чека","чеков","чеков")} с оправой`,fr.length?C.ring(both/fr.length,"var(--p3)"):"")}
-    if(on(36))cards+=CARD("Валовая прибыль и маржа",mg.rev?fmt(mg.gross)+" сум":"—",mg.rev?`маржа ${pctF(mg.m)} · посчитано по ${pctF(mg.cover)} выручки, где известна цена покупки${lensRules.length||itemMap.size?" · часть себестоимости — оценка, расчёт идёт":""}`:"нет цен покупки: пришлите список «Все товары»");
+    if(on(36))cards+=CARD("Валовая прибыль",mg.rev?fmt(mg.gross)+" сум":"—",mg.rev?`посчитано по ${pctF(mg.cover)} выручки, где известна цена покупки${lensRules.length||itemMap.size?" · часть себестоимости — оценка, расчёт идёт":""}`:"нет цен покупки: пришлите список «Все товары»");
     if(on(37))cards+=CARD("Маржа",mg.m!=null?pctF(mg.m):"—",mg.rev?`выручка ${fmtM(mg.rev)} · себестоимость ${fmtM(mg.cogs)}`:"нет цен покупки",mg.m!=null?C.ring(mg.m,"var(--plus)"):"");
-    if(on(40))cards+=CARD("Скидки",fmt(a.disc)+" сум",`${a.rev?((a.disc/(a.rev+a.disc))*100).toFixed(1).replace(".",","):"0"}% от суммы без скидок · со скидкой ${a.discN} из ${a.n} позиций · `+(cmp(a.disc,pa&&pa.disc)||""));
+    if(on(40))cards+=CARD("Скидки",fmt(a.disc)+" сум",cmp(a.disc,pa&&pa.disc));
     if(on(41))cards+=CARD("Скидка от выручки",a.rev?((a.disc/(a.rev+a.disc))*100).toFixed(1).replace(".",",")+"%":"—","от суммы без скидок");
     if(on(42))cards+=CARD("Продаж со скидкой",pctF(a.n?a.discN/a.n:0),`${a.discN} из ${a.n} позиций`);
     $("anCards").innerHTML=cards;
@@ -4446,19 +4438,19 @@ window.SaifXL=(function(){
     if(on(15))w+=W_("Доля точек в выручке","",C.donut(ptItems.map(o=>({label:o.k,value:o.r,color:pointColor(o.k)})),fmtM(a.rev),"выручка"));
     if(on(16))w+=W_("Точки: сейчас и раньше",pa?"Яркие столбцы — текущий период, бледные — прошлый":"Сравнение появится, когда выбран период с датами",C.groupBars(ptItems.map(o=>o.k),[{name:"Текущий",color:"var(--accent)",vals:ptItems.map(o=>o.r)}].concat(pa?[{name:"Прошлый",color:"var(--accent)",dash:true,vals:ptItems.map(o=>gpp[o.k]?gpp[o.k].r:0)}]:[])));
     if(on(17))w+=W_("Средний чек по точкам","",C.hbars(ptItems.map(o=>({label:o.k,value:o.r/o.ch.size,color:pointColor(o.k),sub:`${o.ch.size} чеков`}))));
-    if(on(18))w+=W_("Точки: доля, рейтинг и рост","Выручка точки, её доля во всей выручке и изменение к прошлому периоду",C.hbars(ptItems.map(o=>({label:o.k,value:o.r,color:pointColor(o.k),sub:pctF(a.rev?o.r/a.rev:0)+(gpp[o.k]?" · "+pctTxt(o.r,gpp[o.k].r):"")})),{rank:true}));
+    if(on(18))w+=W_("Рейтинг точек","По выручке, в скобках — изменение к прошлому периоду",C.hbars(ptItems.map(o=>({label:o.k,value:o.r,color:pointColor(o.k),sub:gpp[o.k]?pctTxt(o.r,gpp[o.k].r):""})),{rank:true}));
     if(on(19))w+=W_("Выручка на рабочий день","Выручка точки, делённая на дни, когда у неё были продажи",C.hbars(ptItems.map(o=>({label:o.k,value:o.r/o.days.size,color:pointColor(o.k),sub:`${o.days.size} дн.`})).sort((x,y)=>y.value-x.value)));
     const cashBy={};list.forEach(s=>cashBy[s.point]=(cashBy[s.point]||0)+(+(payOf(s)["Наличные"]||0)));
-    if(on(20)){const kc0=KASSA_POINTS.filter(p=>F.point==="all"||p===F.point),bc0=kc0.reduce((x,p)=>x+(cashBy[p]||0),0),ke0=ex.filter(e=>kc0.includes(e.branch)).reduce((x,e)=>x+(typeof e.fact==="number"?e.fact:+e.amount||0),0);w+=W_("Б/Ч по точкам",`Наличные: Премиум, Яшнабад и C1 идут в кассу, Сергели остаётся на точке · в кассу ${fmt(bc0)} − расходы дня ${fmt(ke0)} = ${fmt(bc0-ke0)}`,C.hbars(Object.entries(cashBy).sort((x,y)=>y[1]-x[1]).map(([k,v])=>({label:k,value:v,color:pointColor(k),sub:KASSA_POINTS.includes(k)?"· в кассу":"· на точке"}))))}
+    if(on(20))w+=W_("Б/Ч по точкам","Наличные: Премиум, Яшнабад и C1 идут в кассу, Сергели остаётся на точке",C.hbars(Object.entries(cashBy).sort((x,y)=>y[1]-x[1]).map(([k,v])=>({label:k,value:v,color:pointColor(k),sub:KASSA_POINTS.includes(k)?"· в кассу":"· на точке"}))));
     if(on(22)){const py={};list.forEach(s=>Object.entries(payOf(s)).forEach(([k,v])=>py[k]=(py[k]||0)+v));w+=W_("Способы оплаты","",C.donut(PAYS.filter(p=>py[p]).map(p=>({label:p,value:py[p],color:PAYCOL[p]})),fmtM(a.rev),"всего"))}
     if(on(23)){const eb={},ea={};ex.forEach(e=>{const v=typeof e.fact==="number"?e.fact:+e.amount||0;eb[e.branch]=(eb[e.branch]||0)+v;const k=String(e.name).replace(/^\S+\s+(за|на)\s+/i,"");const kk=k.charAt(0).toUpperCase()+k.slice(1);ea[kk]=(ea[kk]||0)+v});
-      w+=W_("Расходы дня",`Всего ${fmt(expSum)} сум${a.rev?` · ${(expSum/a.rev*100).toFixed(1).replace(".",",")}% от выручки`:""}`,`<h3 class="wsub">По точкам</h3>`+C.hbars(Object.entries(eb).sort((x,y)=>y[1]-x[1]).map(([k,v])=>({label:k,value:v,color:pointColor(k)})))+`<h3 class="wsub">По статьям</h3>`+C.hbars(Object.entries(ea).sort((x,y)=>y[1]-x[1]).slice(0,7).map(([k,v])=>({label:k,value:v,color:"var(--op)"}))))}
+      w+=W_("Расходы дня",`Всего ${fmt(expSum)} сум`,`<h3 class="wsub">По точкам</h3>`+C.hbars(Object.entries(eb).sort((x,y)=>y[1]-x[1]).map(([k,v])=>({label:k,value:v,color:pointColor(k)})))+`<h3 class="wsub">По статьям</h3>`+C.hbars(Object.entries(ea).sort((x,y)=>y[1]-x[1]).slice(0,7).map(([k,v])=>({label:k,value:v,color:"var(--op)"}))))}
     if(on(25)){const kc=KASSA_POINTS.filter(p=>F.point==="all"||p===F.point);const bc=kc.reduce((x,p)=>x+(cashBy[p]||0),0);const ke=ex.filter(e=>kc.includes(e.branch)).reduce((x,e)=>x+(typeof e.fact==="number"?e.fact:+e.amount||0),0);
       w+=W_("Б/Ч в кассу после расходов","Премиум, Яшнабад и C1: наличные минус расходы дня",kc.length?C.waterfall([{label:"Б/Ч",value:bc,type:"start"},{label:"Расходы дня",value:-ke,type:"minus"},{label:"Остаётся",value:bc-ke,type:"total"}]):C.none())}
     if(on(27)){const cl=[...cashlog].filter(c=>{const d=iso(new Date(c.at||0));return d>=r.from&&d<=r.to}).sort((x,y)=>(x.at||0)-(y.at||0)).slice(-30);w+=W_("Излишек / недостача по пересчётам",`Пересчёты кассы за ${r.from===r.to?dLong(r.from):dShort(r.from)+"–"+dShort(r.to)}: зелёный — излишек, красный — недостача`,cl.length?C.bars(cl.map(c=>{const d=new Date(c.at);return pad(d.getDate())+"."+pad(d.getMonth()+1)}),cl.map(c=>(+c.amount||0)-(+c.expected||0)),{colors:cl.map(c=>(+c.amount||0)>=(+c.expected||0)?"var(--plus)":"var(--minus)"),lf:v=>(v<0?"−":"+")+fmtM(Math.abs(v)),vf:v=>(v<0?"недостача ":"излишек ")+fmt(Math.abs(v))}):(cashlog.length?`<p class="note">За выбранный период пересчётов не было. Всего пересчётов: ${cashlog.length}, последний — ${dLong(iso(new Date(Math.max(...cashlog.map(c=>c.at||0)))))}.</p>`:`<p class="note">Пересчётов пока нет. История начнётся со следующего нажатия «Пересчитал» на вкладке «Касса».</p>`))}
     const gc=Object.values(grp("cat",list)).sort((x,y)=>y.r-x.r);
     if(on(28))w+=W_("Выручка по категориям","",C.donut(gc.map((o,i)=>({label:o.k,value:o.r,color:CATCOL[i%CATCOL.length]})),fmtM(a.rev),"выручка"));
-    if(on(29))w+=W_("Категории","Сколько процентов выручки даёт каждая категория",C.hbars(gc.map((o,i)=>({label:o.k,value:o.r,color:CATCOL[i%CATCOL.length],valTxt:pctF(o.r/a.rev),sub:fmtM(o.r)}))));
+    if(on(29))w+=W_("Доля категорий","Сколько процентов выручки даёт каждая категория",C.hbars(gc.map((o,i)=>({label:o.k,value:o.r,color:CATCOL[i%CATCOL.length],valTxt:pctF(o.r/a.rev),sub:fmtM(o.r)}))));
     if(on(30)){const rows=gc.filter(o=>o.u>0&&!/без детализации|погашени/i.test(o.k)).map(o=>{const ps=list.filter(s=>(s.cat||"—")===o.k&&+s.qty>0).map(s=>(+s.sum||0)/(+s.qty||1));return {k:o.k,avg:o.r/o.u,min:Math.min(...ps),max:Math.max(...ps),u:o.u,r:o.r}}).sort((x,y)=>y.avg-x.avg);const mx=Math.max(1,...rows.map(o=>o.avg));
       w+=W_("Средняя цена по категориям","Сколько в среднем платят за одну единицу. Полоса — средняя цена, серая зона — от самой дешёвой до самой дорогой продажи.",rows.length?`<div class="rl">${rows.map((o,i)=>`<div class="rlr"><div class="rlh"><span class="rlname"><span class="sw" style="background:${CATCOL[gc.findIndex(g=>g.k===o.k)%CATCOL.length]}"></span>${esc(o.k)}</span><b class="num rlv">${fmt(o.avg)}</b></div><div class="rlbar"><span class="rng" style="left:${o.min/mx*100}%;width:${Math.max(.5,(Math.min(o.max,mx)-o.min)/mx*100)}%"></span><span class="avg" style="left:${o.avg/mx*100}%"></span></div><div class="rlsub">${fmt(o.u)} ед. · от ${fmt(o.min)} до ${fmt(o.max)} · выручка ${fmtM(o.r)}</div></div>`).join("")}</div>`:C.none())}
     const gt=Object.values(grp("product",list));
@@ -4522,9 +4514,9 @@ window.SaifXL=(function(){
       const pts=ptItems.map(o=>o.k);const hm={};let hmax=1;list.forEach(s=>{const k=s.point+"|"+wdIdx(s.date);hm[k]=(hm[k]||0)+(+s.sum||0)});
       const avg=(p,i)=>wdCount[i]?(hm[p+"|"+i]||0)/wdCount[i]:0;pts.forEach(p=>WD.forEach((x,i)=>hmax=Math.max(hmax,avg(p,i))));
       const best={};pts.forEach(p=>{let bi=0;WD.forEach((x,i)=>{if(avg(p,i)>avg(p,bi))bi=i});best[p]=bi});
-      const heat=`<div class="tbl"><table class="heat"><thead><tr><th>Точка</th>${WD.map(x=>`<th>${x}</th>`).join("")}</tr></thead><tbody>`+pts.map(p=>`<tr><td>${esc(p)}</td>${WD.map((x,i)=>{const v=avg(p,i);const o=v?0.12+0.78*(v/hmax):0;const b=best[p]===i&&v;return `<td style="background:color-mix(in srgb, var(--accent) ${Math.round(o*100)}%, var(--bg));color:${o>0.55?"var(--surface)":"var(--ink)"};${b?"outline:2px solid var(--warn);outline-offset:-2px;":""}" title="${esc(p)}, ${x}: в среднем ${fmt(v)} сум">${v?fmtM(v):"—"}</td>`}).join("")}</tr>`).join("")+`</tbody></table></div>`;
-      const bestTxt=true?`<div class="bestwd">${pts.map(p=>`<span><span class="sw" style="background:${pointColor(p)}"></span>${esc(p)}: <b>${WD[best[p]]}</b> · ${fmtM(avg(p,best[p]))} в среднем</span>`).join("")}</div>`:"";
-      w+=W_("Точки × дни недели","Средняя выручка за один такой день. Чем темнее, тем больше; лучший день точки обведён",heat+bestTxt,true);
+      const heat=`<div class="tbl"><table class="heat"><thead><tr><th>Точка</th>${WD.map(x=>`<th>${x}</th>`).join("")}</tr></thead><tbody>`+pts.map(p=>`<tr><td>${esc(p)}</td>${WD.map((x,i)=>{const v=avg(p,i);const o=v?0.12+0.78*(v/hmax):0;const b=on(47)&&best[p]===i&&v;return `<td style="background:color-mix(in srgb, var(--accent) ${Math.round(o*100)}%, var(--bg));color:${o>0.55?"var(--surface)":"var(--ink)"};${b?"outline:2px solid var(--warn);outline-offset:-2px;":""}" title="${esc(p)}, ${x}: в среднем ${fmt(v)} сум">${v?fmtM(v):"—"}</td>`}).join("")}</tr>`).join("")+`</tbody></table></div>`;
+      const bestTxt=on(47)?`<div class="bestwd">${pts.map(p=>`<span><span class="sw" style="background:${pointColor(p)}"></span>${esc(p)}: <b>${WD[best[p]]}</b> · ${fmtM(avg(p,best[p]))} в среднем</span>`).join("")}</div>`:"";
+      w+=W_(on(46)?"Точки × дни недели":"Лучший день недели каждой точки","Средняя выручка за один такой день. Чем темнее, тем больше"+(on(47)?"; лучший день точки обведён":""),heat+bestTxt,true);
     }
     // ----- новая партия -----
     const bb=curBatch();
