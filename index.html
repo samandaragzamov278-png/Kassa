@@ -4183,7 +4183,13 @@ window.SaifXL=(function(){
       sales.forEach(s=>{if(s.point==="Сергели"&&s.cat==="Очковые линзы"&&(+s.qty||0)>0)n[s.date]=(n[s.date]||0)+(+s.qty||0)});lensDayCache={ex,n}}
     const c=lensDayCache;return c.n[d]&&c.ex[d]?c.ex[d]/c.n[d]:null}
   const lensCostOf=s=>{if(s.cat!=="Очковые линзы")return null;if(s.point==="Сергели"&&lensCfg&&lensCfg.sergeli==="journal")return sgLensDay(s.date);const r=lensRule(s);if(r&&r.pair>0)return r.pair;const b=lensBand(s);return b?+b.pair:null};
-  const costOf=s=>{if(+s.cost>0)return +s.cost;{const lc=lensCostOf(s);if(lc!=null)return lc}const m=batchMatcher()(s.product,unitPrice(s),s.point);return m&&+m.it.cp>0?+m.it.cp:0};
+  const costOf=s=>{if(+s.cost>0)return +s.cost;{const lc=lensCostOf(s);if(lc!=null)return lc}const m=batchMatcher()(s.product,unitPrice(s),s.point);return m&&+m.it.cp>0?+m.it.cp:itemCostOf(s)};
+  // товары без цены закупки на складе: цена за 1 шт из settings/itemCost (категория + название как в Кассе);
+  // ratio — доля от цены продажи (для названий без модели), pack — цена пачки, если продали пачкой
+  let itemMap=new Map();
+  function setItemCfg(d){itemMap=new Map();((d&&d.rules)||[]).forEach(r=>itemMap.set(r.cat+"|"+r.name,r))}
+  function itemCostOf(s){const r=itemMap.get((s.cat||"")+"|"+normS(s.product||""));if(!r)return 0;const p=unitPrice(s);
+    if(r.pack&&p>=+r.pack.from)return +r.pack.cost;if(r.ratio)return Math.round(p*r.ratio);return +r.cost||0}
   function marginOf(l){let rev=0,cogs=0,all=0;l.forEach(s=>{all+=+s.sum||0;const c=costOf(s);if(c){rev+=+s.sum||0;cogs+=c*(+s.qty||0)}});return {rev,cogs,gross:rev-cogs,m:rev?(rev-cogs)/rev:null,cover:all?rev/all:0}}
 
   // ===================== вкладка «Аналитика» =====================
@@ -4267,7 +4273,7 @@ window.SaifXL=(function(){
     if(on(26)&&window.__kassa&&window.__kassaFor&&(r.to||"").slice(0,7)<window.__kassa.month){const pm=r.to.slice(0,7),x=window.__kassaFor(pm);cards+=CARD("Касса за "+["январь","февраль","март","апрель","май","июнь","июль","август","сентябрь","октябрь","ноябрь","декабрь"][+pm.slice(5,7)-1],"сдана ✓",`Б/Ч ${fmt(x.bcT)} − расходы ${fmt(x.sOp+x.sOth)} = ${fmt(x.expected)} сум`,"","")}
     else if(on(26)){const k=window.__kassa;const km=k&&k.month?MONTHS[+k.month.slice(5,7)-1]:"";cards+=k&&k.actual!=null?CARD(k.diff>=0?"Излишек в кассе":"Недостача в кассе",fmt(Math.abs(k.diff))+" сум",`за ${km}, на сегодня · должно ${fmt(k.expected)} · факт ${fmt(k.actual)}`,"",k.diff>=0?"":"warnc"):CARD("Должно быть на руках",k?fmt(k.expected)+" сум":"—",`касса за ${km}, на сегодня · пересчитайте кассу на вкладке «Касса»`)}
     if(on(35)){const chk={};list.forEach(s=>{const o=chk[checkKey(s)]||(chk[checkKey(s)]={f:0,l:0});if(isFrame(s))o.f=1;if(isLens(s))o.l=1});const fr=Object.values(chk).filter(o=>o.f),both=fr.filter(o=>o.l).length;cards+=CARD("Оправа + линзы в одном чеке",fr.length?pctF(both/fr.length):"—",`${both} из ${fr.length} ${pl(fr.length,"чека","чеков","чеков")} с оправой`,fr.length?C.ring(both/fr.length,"var(--p3)"):"")}
-    if(on(36))cards+=CARD("Валовая прибыль",mg.rev?fmt(mg.gross)+" сум":"—",mg.rev?`посчитано по ${pctF(mg.cover)} выручки, где известна цена покупки${lensRules.length?" · линзы — предварительно, расчёт идёт":""}`:"нет цен покупки: пришлите список «Все товары»");
+    if(on(36))cards+=CARD("Валовая прибыль",mg.rev?fmt(mg.gross)+" сум":"—",mg.rev?`посчитано по ${pctF(mg.cover)} выручки, где известна цена покупки${lensRules.length||itemMap.size?" · часть себестоимости — оценка, расчёт идёт":""}`:"нет цен покупки: пришлите список «Все товары»");
     if(on(37))cards+=CARD("Маржа",mg.m!=null?pctF(mg.m):"—",mg.rev?`выручка ${fmtM(mg.rev)} · себестоимость ${fmtM(mg.cogs)}`:"нет цен покупки",mg.m!=null?C.ring(mg.m,"var(--plus)"):"");
     if(on(40))cards+=CARD("Скидки",fmt(a.disc)+" сум",cmp(a.disc,pa&&pa.disc));
     if(on(41))cards+=CARD("Скидка от выручки",a.rev?((a.disc/(a.rev+a.disc))*100).toFixed(1).replace(".",",")+"%":"—","от суммы без скидок");
@@ -5280,6 +5286,7 @@ window.SaifXL=(function(){
     db.collection("sales").onSnapshot(s=>{if(mode!=="db")return;sales=docs(s);updateDatalist();renderAll();renderPhotos()},()=>{$("salesStatus").textContent="Нет связи с хранилищем"});
     db.collection("entries").onSnapshot(s=>{dayExp=docs(s).filter(e=>e.source==="day"&&e.type!=="inc");lensDayCache=null;renderAll()},()=>{});
     db.doc("settings/lensCost").onSnapshot(s=>{setLensCfg(s.exists?s.data():null);renderAll()},()=>{});
+    db.doc("settings/itemCost").onSnapshot(s=>{setItemCfg(s.exists?s.data():null);renderAll()},()=>{});
     db.collection("batches").onSnapshot(s=>{batches=docs(s);matcherCache=null;renderAll()},()=>{});
     db.collection("stock").onSnapshot(s=>{stockParts=docs(s);matcherCache=null;renderAll()},()=>{});
     db.doc("sync/billz-c1").onSnapshot(s=>{bzC1=s.exists?s.data():null;renderBz()},()=>{});
