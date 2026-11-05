@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { delDoc, loadData, setDoc, subscribe } from "./source";
-import type { Data, PayItem, PayMark } from "./types";
+import type { Data, Entry, PayItem, PayMark, Template } from "./types";
 
 const KEY = ["kassa-data"];
 
@@ -23,7 +23,23 @@ export function useMutations() {
   const qc = useQueryClient();
   const patch = (f: (d: Data) => Data) => qc.setQueryData<Data>(KEY, (d) => (d ? f(d) : d));
   const safe = async (p: Promise<void>) => { try { await p; } catch (e) { await qc.invalidateQueries({ queryKey: KEY }); throw e; } };
+  const upsert = <T extends { id: string }>(arr: T[], x: T) => { const i = arr.findIndex((y) => y.id === x.id); const a = arr.slice(); if (i >= 0) a[i] = x; else a.push(x); return a; };
   return {
+    /** entries/<id>: расход или приход Кассы */
+    async putEntry(id: string, e: Omit<Entry, "id">) {
+      const x: Record<string, unknown> = { ...e }; delete x.id; Object.keys(x).forEach((k) => x[k] === undefined && delete x[k]);
+      patch((d) => ({ ...d, entries: upsert(d.entries, { ...(x as Omit<Entry, "id">), id } as Entry) }));
+      await safe(setDoc("entries", id, x));
+    },
+    async delEntry(id: string) { patch((d) => ({ ...d, entries: d.entries.filter((e) => e.id !== id) })); await safe(delDoc("entries", id)); },
+    async putTemplate(id: string, t: Omit<Template, "id">) { patch((d) => ({ ...d, templates: upsert(d.templates, { ...t, id }) })); await safe(setDoc("templates", id, t)); },
+    async delTemplate(id: string) { patch((d) => ({ ...d, templates: d.templates.filter((t) => t.id !== id) })); await safe(delDoc("templates", id)); },
+    /** пересчёт кассы: cash/current + запись в журнал пересчётов cashlog (как на рабочем сайте) */
+    async saveCash(amount: number, expected: number, month: string, logId: string) {
+      const now = Date.now(), cash = { amount, updatedAt: now, month }, log = { amount, expected, at: now, month };
+      patch((d) => ({ ...d, cash, cashlog: [...d.cashlog, log] }));
+      await safe(setDoc("cash", "current", cash)); try { await setDoc("cashlog", logId, log); } catch { /* журнал не критичен, как и раньше */ }
+    },
     async putItem(id: string, it: Omit<PayItem, "id">) {
       const x: Omit<PayItem, "id"> & { id?: string } = { ...it, updatedAt: Date.now() - 1000 }; delete x.id;
       patch((d) => ({ ...d, items: { ...d.items, [id]: { ...(x as PayItem), id } } }));

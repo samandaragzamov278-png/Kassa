@@ -1,7 +1,7 @@
 // Источник данных: настоящая база Supabase или демо в памяти (адрес с ?demo).
 // Пишем в те же документы docs, что и рабочий сайт, — обе версии видят одни данные.
 import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js";
-import type { BankDay, Data, Entry, PayItem, PayMark, Sale } from "./types";
+import type { BankDay, BcDoc, CashRec, Data, Entry, PayItem, PayMark, Sale, Template } from "./types";
 import { demoRows } from "./demo";
 
 const URL = "https://qvblxhyftwivkzxucfak.supabase.co";
@@ -13,9 +13,8 @@ export const isDemo = typeof location !== "undefined" && new URLSearchParams(loc
 let sb: SupabaseClient | null = null;
 export const client = () => (sb ??= createClient(URL, KEY, { auth: { persistSession: true, storageKey: "kassa-web-auth" } }));
 
-// продажи нужны только за последние месяцы (налог считается с безнала прошлого месяца)
-const salesFrom = () => { const d = new Date(Date.now() + 5 * 3600e3); d.setUTCMonth(d.getUTCMonth() - 3, 1); return d.toISOString().slice(0, 10); };
-const COLS = ["payments", "paymarks", "report", "entries", "settings"];
+// всё, что нужно Платежам и Кассе (продажи — целиком: Касса считает Б/Ч всех месяцев)
+const COLS = ["payments", "paymarks", "report", "entries", "settings", "sales", "cash", "cashlog", "templates", "bc"];
 
 async function loadRows(): Promise<Row[]> {
   if (isDemo) return demoRows();
@@ -24,22 +23,24 @@ async function loadRows(): Promise<Row[]> {
     const { data, error } = await c.from("docs").select("col,id,data").in("col", COLS).order("col").order("id").range(from, from + N - 1);
     if (error) throw error; out.push(...(data as Row[])); if (data.length < N) break;
   }
-  for (let from = 0; ; from += N) {
-    const { data, error } = await c.from("docs").select("col,id,data").eq("col", "sales").gte("data->>date", salesFrom()).order("id").range(from, from + N - 1);
-    if (error) throw error; out.push(...(data as Row[])); if (data.length < N) break;
-  }
   return out;
 }
 
 export function toData(rows: Row[]): Data {
-  const d: Data = { items: {}, marks: {}, sales: [], entries: [], report: {}, points: ["Премиум", "Яшнабад", "Сергели", "C1"] };
-  for (const r of rows) {
+  const d: Data = { cash: null, cashlog: [], templates: [], bc: [], items: {}, marks: {}, sales: [], entries: [], report: {}, points: ["Премиум", "Яшнабад", "Сергели", "C1"] };
+  // одна запись на col+id (последняя побеждает) — как в базе и на рабочем сайте
+  const uniq = new Map<string, Row>(); rows.forEach((r) => uniq.set(r.col + "/" + r.id, r));
+  for (const r of uniq.values()) {
     const x = r.data as never;
     if (r.col === "payments") d.items[r.id] = { ...(x as PayItem), id: r.id };
     else if (r.col === "paymarks") d.marks[r.id] = x as PayMark;
     else if (r.col === "sales") d.sales.push({ ...(x as Sale), id: r.id });
     else if (r.col === "entries") d.entries.push({ ...(x as Entry), id: r.id });
     else if (r.col === "report" && /^\d{4}-\d\d-\d\d$/.test(r.id)) d.report[r.id] = { ...(x as BankDay), id: r.id };
+    else if (r.col === "cash" && r.id === "current") d.cash = x as Data["cash"];
+    else if (r.col === "cashlog") d.cashlog.push(x as CashRec);
+    else if (r.col === "templates") d.templates.push({ ...(x as Template), id: r.id });
+    else if (r.col === "bc") d.bc.push({ ...(x as BcDoc), id: r.id });
     else if (r.col === "settings" && r.id === "sales") { const p = (x as { points?: string[] }).points; if (Array.isArray(p) && p.length) d.points = p; }
   }
   return d;
@@ -68,7 +69,7 @@ export function subscribe(onChange: () => void): () => void {
   const c = client();
   const ch = c.channel("kassa-web-live").on("postgres_changes", { event: "*", schema: "public", table: "docs" }, (p) => {
     const col = ((p.new as Row)?.col || (p.old as Row)?.col) as string | undefined;
-    if (!col || COLS.includes(col) || col === "sales") onChange();
+    if (!col || COLS.includes(col)) onChange();
   }).subscribe();
   return () => { c.removeChannel(ch); };
 }
