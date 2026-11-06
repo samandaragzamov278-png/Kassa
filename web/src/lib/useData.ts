@@ -24,7 +24,18 @@ export function useMutations() {
   const patch = (f: (d: Data) => Data) => qc.setQueryData<Data>(KEY, (d) => (d ? f(d) : d));
   const safe = async (p: Promise<void>) => { try { await p; } catch (e) { await qc.invalidateQueries({ queryKey: KEY }); throw e; } };
   const upsert = <T extends { id: string }>(arr: T[], x: T) => { const i = arr.findIndex((y) => y.id === x.id); const a = arr.slice(); if (i >= 0) a[i] = x; else a.push(x); return a; };
+  const reload = () => qc.invalidateQueries({ queryKey: KEY });
   return {
+    /** любой документ docs: col/id. Для коллекций, у которых нет своих полей в Data, — данные в Data.rows; после записи перечитываем */
+    async putDoc(col: string, id: string, data: object) {
+      const clean = JSON.parse(JSON.stringify(data));
+      patch((d) => ({ ...d, rows: { ...d.rows, [col]: { ...(d.rows[col] || {}), [id]: clean } }, ...(col === "sales" ? { sales: upsert(d.sales, { ...clean, id }) } : {}) }));
+      await safe(setDoc(col, id, data)); await reload();
+    },
+    async delDoc(col: string, id: string) {
+      patch((d) => { const c = { ...(d.rows[col] || {}) }; delete c[id]; return { ...d, rows: { ...d.rows, [col]: c }, ...(col === "sales" ? { sales: d.sales.filter((s) => s.id !== id) } : {}) }; });
+      await safe(delDoc(col, id)); await reload();
+    },
     /** entries/<id>: расход или приход Кассы */
     async putEntry(id: string, e: Omit<Entry, "id">) {
       const x: Record<string, unknown> = { ...e }; delete x.id; Object.keys(x).forEach((k) => x[k] === undefined && delete x[k]);

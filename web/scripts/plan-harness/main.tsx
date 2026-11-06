@@ -1,0 +1,20 @@
+import { createRoot } from "react-dom/client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "sonner";
+import { useData } from "@/lib/useData";
+import { HomePage } from "@/features/home/HomePage";
+import { PlanPage } from "@/features/plan/PlanPage";
+import "@/index.css";
+
+const qs = new URLSearchParams(location.search), dark = qs.has("dark");
+document.documentElement.classList.toggle("dark", dark);
+const qc = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false, retry: 0 } } });
+function Page() {
+  const q = useData();
+  if (!q.data) return <p className="p-6">Загрузка…</p>;
+  return qs.get("p") === "plan" ? <PlanPage d={q.data} /> : <HomePage d={q.data} />;
+}
+createRoot(document.getElementById("root")!).render(
+  <QueryClientProvider client={qc}><TooltipProvider><div className="mx-auto max-w-[1360px] px-4 pt-5 pb-28 lg:pr-8 lg:pl-28"><Page /></div><Toaster theme={dark ? "dark" : "light"} richColors /></TooltipProvider></QueryClientProvider>,
+);

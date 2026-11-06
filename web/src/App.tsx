@@ -15,13 +15,24 @@ import { useData } from "@/lib/useData";
 import { Login } from "@/components/Login";
 import { PayPage } from "@/features/pay/PayPage";
 import { KassaPage } from "@/features/kassa/KassaPage";
+import { HomePage } from "@/features/home/HomePage";
+import { PlanPage } from "@/features/plan/PlanPage";
+import { SalesPage } from "@/features/sales/SalesPage";
+import { AnalyticsPage } from "@/features/analytics/AnalyticsPage";
+import { LensPage } from "@/features/lens/LensPage";
+import { ReportPage } from "@/features/report/ReportPage";
+import { ReconPage } from "@/features/recon/ReconPage";
+import { StockPage } from "@/features/stock/StockPage";
+import type { Data } from "@/lib/types";
+
+const PAGES: Record<string, (p: { d: Data }) => React.ReactNode> = { home: HomePage, kassa: KassaPage, report: ReportPage, pay: PayPage, sales: SalesPage, recon: ReconPage, analytics: AnalyticsPage, plan: PlanPage, lens: LensPage, batch: StockPage };
 
 const qc = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false, retry: 1 } } });
 const OLD = "https://samandaragzamov278-png.github.io/Kassa/";
 const NAV: { id: string; label: string; icon: LucideIcon; ready?: boolean }[] = [
-  { id: "home", label: "Главная", icon: Home }, { id: "kassa", label: "Касса", icon: Wallet, ready: true }, { id: "report", label: "Отчёт р/с", icon: FileText },
-  { id: "pay", label: "Платежи", icon: CalendarCheck, ready: true }, { id: "sales", label: "Продажи", icon: ShoppingBag }, { id: "recon", label: "Сверка", icon: Scale },
-  { id: "analytics", label: "Аналитика", icon: BarChart3 }, { id: "plan", label: "План", icon: Target }, { id: "lens", label: "Линзы", icon: Glasses }, { id: "batch", label: "Склад", icon: Package },
+  { id: "home", label: "Главная", icon: Home, ready: true }, { id: "kassa", label: "Касса", icon: Wallet, ready: true }, { id: "report", label: "Отчёт р/с", icon: FileText, ready: true },
+  { id: "pay", label: "Платежи", icon: CalendarCheck, ready: true }, { id: "sales", label: "Продажи", icon: ShoppingBag, ready: true }, { id: "recon", label: "Сверка", icon: Scale, ready: true },
+  { id: "analytics", label: "Аналитика", icon: BarChart3, ready: true }, { id: "plan", label: "План", icon: Target, ready: true }, { id: "lens", label: "Линзы", icon: Glasses, ready: true }, { id: "batch", label: "Склад", icon: Package, ready: true },
 ];
 
 function useTheme() {
@@ -39,7 +50,7 @@ function Clock() {
 // раздел — из адреса (#kassa, #pay); неготовые разделы открываются на рабочем сайте
 const READY = NAV.filter((n) => n.ready).map((n) => n.id);
 function useTab() {
-  const get = () => { const h = location.hash.replace("#", ""); return READY.includes(h) ? h : "kassa"; };
+  const get = () => { const h = location.hash.replace("#", ""); return READY.includes(h) ? h : "home"; };
   const [t, setT] = useState(get);
   useEffect(() => { const f = () => setT(get()); window.addEventListener("hashchange", f); return () => window.removeEventListener("hashchange", f); }, []);
   return [t, (x: string) => { location.hash = x; window.scrollTo({ top: 0, behavior: "smooth" }); }] as const;
@@ -79,7 +90,7 @@ function Shell({ email }: { email: string }) {
           ) : q.error ? (
             <motion.p key="err" className="glass rounded-3xl p-6 text-minus">Не удалось загрузить данные: {String((q.error as Error).message || q.error)}</motion.p>
           ) : q.data ? (
-            <motion.div key={tab} initial={{ opacity: 0, y: 8, filter: "blur(8px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, filter: "blur(6px)" }} transition={{ duration: 0.35 }}>{tab === "pay" ? <PayPage d={q.data} /> : <KassaPage d={q.data} />}</motion.div>
+            <motion.div key={tab} initial={{ opacity: 0, y: 8, filter: "blur(8px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, filter: "blur(6px)" }} transition={{ duration: 0.35 }}>{(() => { const P = PAGES[tab] || KassaPage; return <P d={q.data} />; })()}</motion.div>
           ) : null}
         </AnimatePresence>
       </div>

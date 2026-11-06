@@ -2,7 +2,6 @@
 // Пишем в те же документы docs, что и рабочий сайт, — обе версии видят одни данные.
 import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js";
 import type { BankDay, BcDoc, CashRec, Data, Entry, PayItem, PayMark, Sale, Template } from "./types";
-import { demoRows } from "./demo";
 
 const URL = "https://qvblxhyftwivkzxucfak.supabase.co";
 const KEY = "sb_publishable_-ceoJkpmAZ7Y8osbPHaOlg_3nqUsdB7"; // публичный ключ, доступ даёт только вход
@@ -13,25 +12,25 @@ export const isDemo = typeof location !== "undefined" && new URLSearchParams(loc
 let sb: SupabaseClient | null = null;
 export const client = () => (sb ??= createClient(URL, KEY, { auth: { persistSession: true, storageKey: "kassa-web-auth" } }));
 
-// всё, что нужно Платежам и Кассе (продажи — целиком: Касса считает Б/Ч всех месяцев)
-const COLS = ["payments", "paymarks", "report", "entries", "settings", "sales", "cash", "cashlog", "templates", "bc"];
 
 async function loadRows(): Promise<Row[]> {
-  if (isDemo) return demoRows();
+  if (isDemo) return (await import("./demoAll")).demoAll(); // только в браузере (Vite)
   const c = client(), out: Row[] = [], N = 1000;
   for (let from = 0; ; from += N) {
-    const { data, error } = await c.from("docs").select("col,id,data").in("col", COLS).order("col").order("id").range(from, from + N - 1);
+    // все документы, как на рабочем сайте: каждый раздел берёт свои коллекции из Data.rows
+    const { data, error } = await c.from("docs").select("col,id,data").order("col").order("id").range(from, from + N - 1);
     if (error) throw error; out.push(...(data as Row[])); if (data.length < N) break;
   }
   return out;
 }
 
 export function toData(rows: Row[]): Data {
-  const d: Data = { cash: null, cashlog: [], templates: [], bc: [], items: {}, marks: {}, sales: [], entries: [], report: {}, points: ["Премиум", "Яшнабад", "Сергели", "C1"] };
+  const d: Data = { rows: {}, cash: null, cashlog: [], templates: [], bc: [], items: {}, marks: {}, sales: [], entries: [], report: {}, points: ["Премиум", "Яшнабад", "Сергели", "C1"] };
   // одна запись на col+id (последняя побеждает) — как в базе и на рабочем сайте
   const uniq = new Map<string, Row>(); rows.forEach((r) => uniq.set(r.col + "/" + r.id, r));
   for (const r of uniq.values()) {
     const x = r.data as never;
+    (d.rows[r.col] ||= {})[r.id] = r.data;
     if (r.col === "payments") d.items[r.id] = { ...(x as PayItem), id: r.id };
     else if (r.col === "paymarks") d.marks[r.id] = x as PayMark;
     else if (r.col === "sales") d.sales.push({ ...(x as Sale), id: r.id });
@@ -69,9 +68,22 @@ export function subscribe(onChange: () => void): () => void {
   const c = client();
   const ch = c.channel("kassa-web-live").on("postgres_changes", { event: "*", schema: "public", table: "docs" }, (p) => {
     const col = ((p.new as Row)?.col || (p.old as Row)?.col) as string | undefined;
-    if (!col || COLS.includes(col)) onChange();
+    if (col !== undefined) onChange();
   }).subscribe();
   return () => { c.removeChannel(ch); };
+}
+
+/** таблицы Billz (bz_check, bz_stock, bz_product, bz_transfer, billz_log): запрос с фильтрами; в демо — данные раздела или пусто */
+const demoTables: Record<string, Record<string, unknown>[]> = {};
+export function setDemoTable(table: string, rows: Record<string, unknown>[]) { demoTables[table] = rows; }
+export async function bzSelect<T = Record<string, unknown>>(table: string, build?: (q: any) => any): Promise<T[]> { // eslint-disable-line @typescript-eslint/no-explicit-any
+  if (isDemo) return (demoTables[table] || []) as T[];
+  const out: T[] = [], N = 1000;
+  for (let from = 0; ; from += N) {
+    let q = client().from(table).select("*"); if (build) q = build(q);
+    const { data, error } = await q.range(from, from + N - 1); if (error) throw error; out.push(...(data as T[])); if (data.length < N) break;
+  }
+  return out;
 }
 
 // вход

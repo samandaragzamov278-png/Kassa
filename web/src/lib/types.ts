@@ -79,6 +79,8 @@ export interface BankDay {
 }
 
 export interface Data {
+  /** все документы по коллекциям: rows[col][id] = data — для разделов, которым нужны свои коллекции */
+  rows: Record<string, Record<string, Record<string, unknown>>>;
   cash: { amount: number; updatedAt: number; month?: string } | null;
   cashlog: CashRec[];
   templates: Template[];
