@@ -9,6 +9,7 @@ const GRID = "var(--border)";
 const TT = { contentStyle: { background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 12, fontSize: 12.5, boxShadow: "var(--shadow)" }, labelStyle: { color: "var(--muted-foreground)", fontSize: 11.5 }, itemStyle: { color: "var(--popover-foreground)" } };
 const top = (mx: number) => { const step = niceStep(Math.max(1, mx) / 4); return Math.ceil(Math.max(1, mx) / step) * step; };
 
+const lbl = (s: string) => (s === "—" ? "Без категории" : s);
 export function None({ text = "Нет данных за период" }: { text?: string }) { return <p className="py-3 text-[13px] text-muted-foreground">{text}</p>; }
 
 export function Legend({ items }: { items: { label: string; color: string; dash?: boolean }[] }) {
@@ -42,7 +43,7 @@ export function LineC({ labels, series, h = 240 }: { labels: string[]; series: {
           <ComposedChart data={data} margin={{ top: 10, right: 12, bottom: 0, left: 0 }}>
             <CartesianGrid stroke={GRID} vertical={false} />
             <XAxis dataKey="l" tick={TICK} tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={18} />
-            <YAxis tick={TICK} tickLine={false} axisLine={false} width={48} domain={[0, T]} tickFormatter={(v: number) => fmtM(v)} />
+            <YAxis tick={TICK} tickLine={false} axisLine={false} width={60} domain={[0, T]} tickFormatter={(v: number) => fmtM(v)} />
             <Tooltip {...TT} formatter={(v: unknown, n: unknown) => [fmt(+(v as number)), String(n)]} />
             {series.map((s, k) => s.area
               ? <Area key={k} type="monotone" name={s.name} dataKey={"s" + k} stroke={s.color} strokeWidth={2.5} fill={s.color} fillOpacity={0.12} dot={false} isAnimationActive={false} connectNulls={false} />
@@ -50,7 +51,7 @@ export function LineC({ labels, series, h = 240 }: { labels: string[]; series: {
           </ComposedChart>
         </ResponsiveContainer>
       </div>
-      {series.length > 1 && <Legend items={series.map((s) => ({ label: s.name, color: s.color, dash: s.dash }))} />}
+      {series.length > 1 && <Legend items={series.map((s) => ({ label: s.name, color: s.dash ? "var(--chart-5)" : s.color, dash: s.dash }))} />}
     </>
   );
 }
@@ -66,7 +67,7 @@ export function BarsC({ labels, vals, colors, color = "var(--chart-2)", hl, fmtV
         <BarChart data={data} margin={{ top: 18, right: 6, bottom: 0, left: 0 }}>
           <CartesianGrid stroke={GRID} vertical={false} />
           <XAxis dataKey="l" tick={TICK} tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={10} />
-          <YAxis tick={TICK} tickLine={false} axisLine={false} width={44} tickFormatter={(v: number) => (lblV ? lblV(v) : fmtM(v))} />
+          <YAxis tick={TICK} tickLine={false} axisLine={false} width={60} tickFormatter={(v: number) => (lblV ? lblV(v) : fmtM(v))} />
           <Tooltip {...TT} cursor={{ fill: "var(--muted)" }} formatter={(v: unknown) => [fmtV(+(v as number)), ""]} separator="" />
           <Bar dataKey="v" radius={[5, 5, 0, 0]} maxBarSize={44} isAnimationActive={false} label={small ? { position: "top", fontSize: 10, fill: "var(--foreground)", formatter: (v: unknown) => (+(v as number) ? (lblV || fmtM)(+(v as number)) : "") } : undefined}>
             {data.map((_, i) => <Cell key={i} fill={colors ? colors[i] : hl && i === best ? "var(--primary)" : color} />)}
@@ -87,13 +88,13 @@ export function GroupBarsC({ labels, series }: { labels: string[]; series: { nam
           <BarChart data={data} margin={{ top: 16, right: 6, bottom: 0, left: 0 }}>
             <CartesianGrid stroke={GRID} vertical={false} />
             <XAxis dataKey="l" tick={TICK} tickLine={false} axisLine={false} />
-            <YAxis tick={TICK} tickLine={false} axisLine={false} width={44} tickFormatter={(v: number) => fmtM(v)} />
+            <YAxis tick={TICK} tickLine={false} axisLine={false} width={60} tickFormatter={(v: number) => fmtM(v)} />
             <Tooltip {...TT} cursor={{ fill: "var(--muted)" }} formatter={(v: unknown, n: unknown) => [fmt(+(v as number)), String(n)]} />
-            {series.map((s, k) => <Bar key={k} name={s.name} dataKey={"s" + k} fill={s.color} fillOpacity={s.dash ? 0.4 : 1} radius={[4, 4, 0, 0]} maxBarSize={36} isAnimationActive={false} />)}
+            {series.map((s, k) => <Bar key={k} name={s.name} dataKey={"s" + k} fill={s.dash ? "var(--chart-5)" : s.color} fillOpacity={s.dash ? 0.45 : 1} radius={[4, 4, 0, 0]} maxBarSize={36} isAnimationActive={false} />)}
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <Legend items={series.map((s) => ({ label: s.name, color: s.color, dash: s.dash }))} />
+      <Legend items={series.map((s) => ({ label: s.name, color: s.dash ? "var(--chart-5)" : s.color, dash: s.dash }))} />
     </>
   );
 }
@@ -116,8 +117,8 @@ export function DonutC({ items, center, sub }: { items: { label: string; value: 
           <b className={cn("num font-semibold", center.length > 7 ? "text-[13px]" : "text-[16px]")}>{center}</b>{sub && <small className="text-[10px] text-muted-foreground">{sub}</small>}
         </div>
       </div>
-      <div className="flex min-w-[150px] flex-1 flex-col gap-1.5 text-[13px]">
-        {it.map((i) => <div key={i.label} className="flex items-center justify-between gap-3"><span className="inline-flex min-w-0 items-center gap-2"><i className="size-2.5 shrink-0 rounded-[3px]" style={{ background: i.color }} /><span className="truncate">{i.label}</span></span><span className="num shrink-0 text-muted-foreground">{i.valTxt != null ? i.valTxt : fmtM(i.value)} · {Math.round((i.value / tot) * 100)}%</span></div>)}
+      <div className="flex min-w-[200px] flex-1 flex-col gap-1.5 text-[13px]">
+        {it.map((i) => <div key={i.label} className="flex items-center justify-between gap-3"><span className="inline-flex min-w-0 items-center gap-2"><i className="size-2.5 shrink-0 rounded-[3px]" style={{ background: i.color }} /><span className="leading-tight">{lbl(i.label)}</span></span><span className="num shrink-0 text-muted-foreground">{i.valTxt != null ? i.valTxt : fmtM(i.value)} · {Math.round((i.value / tot) * 100)}%</span></div>)}
       </div>
     </div>
   );
@@ -133,7 +134,7 @@ export function HBars({ items, rank, dot }: { items: HBar[]; rank?: boolean; dot
           <span className="flex min-w-0 items-baseline gap-2 text-[13.5px]">
             {rank && <span className="num grid size-5 shrink-0 place-items-center self-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">{k + 1}</span>}
             {dot && i.color && <i className="size-2.5 shrink-0 self-center rounded-full" style={{ background: i.color }} />}
-            <span className="truncate">{i.label}</span>{i.sub && <span className="truncate text-[12px] text-muted-foreground">{i.sub}</span>}
+            <span className="truncate">{lbl(i.label)}</span>{i.sub && <span className="truncate text-[12px] text-muted-foreground">{i.sub}</span>}
           </span>
           <span className="num text-[13.5px] font-semibold">{i.valTxt != null ? i.valTxt : fmt(i.value)}</span>
           <div className="col-span-2 h-2 overflow-hidden rounded-full bg-muted"><span className="block h-full rounded-full" style={{ width: Math.max(0, i.value) / max * 100 + "%", background: i.color || "var(--primary)" }} /></div>
@@ -157,10 +158,10 @@ export function WaterfallC({ steps }: { steps: { label: string; value: number; t
         <BarChart data={data} margin={{ top: 22, right: 6, bottom: 0, left: 0 }}>
           <CartesianGrid stroke={GRID} vertical={false} />
           <XAxis dataKey="l" tick={{ ...TICK, fontSize: 11.5 }} tickLine={false} axisLine={false} />
-          <YAxis tick={TICK} tickLine={false} axisLine={false} width={48} tickFormatter={(v: number) => fmtM(v)} />
+          <YAxis tick={TICK} tickLine={false} axisLine={false} width={60} tickFormatter={(v: number) => fmtM(v)} />
           <Tooltip {...TT} cursor={{ fill: "var(--muted)" }} formatter={(_: unknown, __: unknown, p: { payload?: { v: number } }) => [fmt(p.payload?.v || 0), ""]} separator="" />
           <Bar dataKey="base" stackId="w" fill="transparent" isAnimationActive={false} />
-          <Bar dataKey="d" stackId="w" radius={[5, 5, 0, 0]} maxBarSize={70} isAnimationActive={false} label={{ position: "top", fontSize: 10.5, fill: "var(--foreground)", formatter: (_: unknown) => "" }}>
+          <Bar dataKey="d" stackId="w" radius={[5, 5, 0, 0]} maxBarSize={70} minPointSize={4} isAnimationActive={false} label={{ position: "top", fontSize: 10.5, fill: "var(--foreground)", formatter: (_: unknown) => "" }}>
             {data.map((x, i) => <Cell key={i} fill={x.col} />)}
           </Bar>
         </BarChart>
@@ -181,7 +182,7 @@ export function ParetoC({ items }: { items: { k: string; r: number; cs: number; 
           <ComposedChart data={data} margin={{ top: 10, right: 6, bottom: 0, left: 0 }}>
             <CartesianGrid stroke={GRID} vertical={false} />
             <XAxis dataKey="l" tick={TICK} tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={8} />
-            <YAxis yAxisId="a" tick={TICK} tickLine={false} axisLine={false} width={48} tickFormatter={(v: number) => fmtM(v)} />
+            <YAxis yAxisId="a" tick={TICK} tickLine={false} axisLine={false} width={60} tickFormatter={(v: number) => fmtM(v)} />
             <YAxis yAxisId="b" orientation="right" domain={[0, 100]} tick={TICK} tickLine={false} axisLine={false} width={34} tickFormatter={(v: number) => v + "%"} />
             <Tooltip {...TT} cursor={{ fill: "var(--muted)" }} labelFormatter={(_, p) => { const x = (p as unknown as { payload?: { name?: string } }[])?.[0]?.payload; return x?.name || ""; }} formatter={(v: unknown, n: unknown, p: { payload?: { abc?: string } }) => (n === "cs" ? [v + "%", "накоплено"] : [fmt(+(v as number)) + " · класс " + (p.payload?.abc || ""), "выручка"])} />
             <Bar yAxisId="a" dataKey="r" radius={[3, 3, 0, 0]} maxBarSize={22} isAnimationActive={false}>{data.map((x, i) => <Cell key={i} fill={col(x.abc)} />)}</Bar>

@@ -236,7 +236,7 @@ export function buildAnalytics(c: Ctx, F: Flt, on: (id: number) => boolean, pgCa
   if (on(34)) {
     const from30 = addD(r.from, -30), cur = new Set(list.map((s) => normS(s.product))), m = matchOf(F); const before: Record<string, { k: string; u: number; r: number; last: string }> = {};
     c.sales.filter((s) => s.date >= from30 && s.date < r.from && m(s)).forEach((s) => { const k = normS(s.product); if (cur.has(k)) return; const o = before[k] || (before[k] = { k: s.product || "", u: 0, r: 0, last: "" }); o.u += +(s.qty || 0); o.r += +s.sum || 0; if (s.date > o.last) o.last = s.date; });
-    W([34], "Перестали продаваться", "Продавались за 30 дней до периода, а в периоде — ни разу", { kind: "lost", rows: Object.values(before).sort((x, y) => y.r - x.r).slice(0, 12), hist: c.sales.some((s) => s.date < r.from) });
+    W([34], "Перестали продаваться", "Продавались за 30 дней до периода, а в периоде — ни разу", { kind: "lost", rows: Object.values(before).sort((x, y) => y.r - x.r).slice(0, 12), hist: c.sales.some((s) => s.date < r.from) }, true);
   }
   if (on(38)) {
     const rows: Bar[] = gc.map((o, i) => { const m = c.marginOf(list.filter((s) => (s.cat || "—") === o.k)); return { label: o.k, value: m.m != null ? m.m * 100 : 0, valTxt: m.m != null ? pctF(m.m) : "—", color: CATCOL[i % CATCOL.length], sub: m.rev ? `прибыль ${fmtM(m.gross)}` : "нет цен покупки" }; });

@@ -41,7 +41,7 @@ export function LensPage({ d }: { d: Data }) {
       {v.empty ? <Empty>За выбранный период продаж очковых линз нет. Сюда попадают только продажи категории «Очковые линзы». Контактные линзы, растворы и капли сюда не входят.</Empty> : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{v.cards.map((k, i) => <Tile key={k.label} c={k} i={i} hintsOn={null} />)}</div>
-          <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <Wd title="Наши линзы по видам" note="ET, Блок, 4в1, Star, Essilor, Seiko и другие — по количеству" hintsOn={null} wide><HBars items={v.kindBars} /></Wd>
             <Wd title="Виды линз" note="По количеству" hintsOn={null}><DonutC items={v.types} center={fmt(v.la.units)} sub="шт" /></Wd>
             <Wd title="Индекс (толщина)" note="1.50 — стандарт, 1.67 и 1.74 — тонкие для сильных диоптрий" hintsOn={null}><HBars items={v.idxBars} /></Wd>

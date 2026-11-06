@@ -39,7 +39,7 @@ export const LIDX = ["1.50", "1.56", "1.59", "1.60", "1.61", "1.67", "1.74"];
 export const LCOAT = ["Без покрытия", "Антиблик", "Блю-блок", "Фотохром", "Фотохром + блю-блок", "4в1", "Тонированные", "Поляризация"];
 export const LKINDS = ["Essilor", "Seiko", "Miyosmart (Hoya)", "Тио", "Прогрессивные", "Бифокальные", "Хамелеон", "1.74", "1.67", "4в1", "Блок (блю-блок)", "Star", "Steel", "ET", "Для чтения", "Для зрения", "Тип не указан"];
 export const PCOL = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
-export const PAYCOL: Record<string, string> = { "Наличные": "var(--chart-1)", "Терминал": "var(--chart-3)", "QR/Payme": "var(--chart-4)", "Перечисление": "var(--chart-5)" };
+export const PAYCOL: Record<string, string> = { "Наличные": "var(--chart-3)", "Терминал": "var(--chart-1)", "QR/Payme": "var(--chart-2)", "Перечисление": "var(--chart-4)" };
 
 export interface Lens { type?: string; index?: string; coat?: string; brand?: string }
 /** продажа с полями, которых нет в общем типе Sale */

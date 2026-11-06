@@ -80,7 +80,7 @@ export function PayPage({ d }: { d: Data }) {
         <Kpi i={3} label="Остаток долгов" value={dLeft ? fmt(dLeft) + " сум" : "—"} sub={debts.length ? `${debts.length} ${pl(debts.length, "долг", "долга", "долгов")}` : "долгов нет"} />
       </div>
 
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
         <Panel title={`Платежи · ${MN[+M.slice(5, 7) - 1].toLowerCase()}`} note="Сумма — нажмите, чтобы поставить другую только на этот месяц. «Оплачено» — поправить, сколько уже заплатили. Статус — отметить оплату одним нажатием."
           action={<Button variant="secondary" onClick={() => addNew("fixed")}><Plus />Платёж</Button>}>
           {rows.length ? <MonthList d={d} M={M} T={T} rows={rows} open={open} setOpen={setOpen} onPlan={onPlan} onPaid={onPaid} onToggle={onToggle}

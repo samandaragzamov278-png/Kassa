@@ -61,7 +61,7 @@ export function Calendar({ c, F, jDay, onOpenDay }: { c: Ctx; F: Filter; jDay: s
             </div>
           </div>);
       })()}
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div key={M} className={cn("min-w-0 animate-in fade-in duration-300", dir < 0 ? "slide-in-from-left-4" : dir > 0 ? "slide-in-from-right-4" : "")}>
           <div className="grid grid-cols-7 gap-1 pb-1 text-center text-[11px] font-semibold text-muted-foreground sm:grid-cols-[repeat(7,minmax(0,1fr))_92px] sm:gap-1.5">
             {[...WD, "Неделя"].map((x, i) => <span key={x} className={i === 7 ? "max-sm:hidden" : ""}>{x}</span>)}</div>

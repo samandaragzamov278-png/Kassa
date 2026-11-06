@@ -72,7 +72,7 @@ export function SalesPage({ d }: { d: Data }) {
       </div>
       <Calendar c={c} F={F} jDay={jDay} onOpenDay={openDay} />
       <DayCash rows={rows} points={c.settings.points} F={F} />
-      <div className="grid items-start gap-4 xl:grid-cols-2">
+      <div className="grid gap-4 xl:grid-cols-2">
         <SaleForm sales={c.sales} settings={c.settings} editing={editing} onSave={save} onCancel={() => setEditing(null)} />
         <ExpenseBox exp={ex} settings={c.settings} onAdd={addExp} onDelete={(id) => mu.delEntry(id)} />
       </div>

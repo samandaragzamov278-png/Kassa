@@ -65,14 +65,14 @@ export function KassaPage({ d, focus }: { d: Data; focus?: "expense" | "cash" | 
       {isLast && <div ref={formRef}><Panel title={editing ? "Изменить запись" : "Добавить расход"} note="Нажмите на шаблон, чтобы заполнить форму, поправьте сумму и дату, затем «Добавить». Итог и недостача пересчитаются сразу.">
         <AddForm templates={d.templates} editing={editing} reserveBal={reserve(d).bal} onSubmit={submit} onCancel={() => setEditing(null)} focusKey={fk}
           onDelTpl={(id) => mu.delTemplate(id).catch(() => toast.error("Не удалось удалить шаблон"))} /></Panel></div>}
-      <div className="grid items-start gap-4 xl:grid-cols-2">
+      <div className="grid gap-4 xl:grid-cols-2">
         <Panel title="Расчёт по шагам" note="Нажмите шаг, чтобы увидеть записи."><Steps c={c} rsvBal={reserve(d, isLast ? null : M).bal} /></Panel>
         <div className="flex flex-col gap-4">
           <Panel title="Операционные и прочие"><Split c={c} /></Panel>
           <Panel title="Выводы"><Insights items={a.insights} /></Panel>
         </div>
       </div>
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
         <Panel title="Б/Ч по дням" note="Наличные продаж Премиума, Яшнабада и C1 за каждый день месяца."><DayChart days={c.days} /></Panel>
         <Panel title="Расходы с Б/Ч по статьям"><Articles a={a} /></Panel>
       </div>

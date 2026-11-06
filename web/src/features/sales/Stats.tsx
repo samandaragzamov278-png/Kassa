@@ -25,11 +25,11 @@ export function Stats({ c, F, list, resetKey }: { c: Ctx; F: Filter; list: SaleX
   const toggleWd = (i: number) => setStF((x) => { const s = new Set(x.wd); s.has(i) ? s.delete(i) : s.add(i); return { ...x, wd: s.size === 7 ? [] : [...s] }; });
 
   return (
-    <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-      <Panel title="Выручка по точкам" note="Столбик — выручка периода, цвет — точка" action={<Seg value={g} onChange={setG} options={GROUPS} label="Группировка" />}>
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+      <Panel title="Выручка по точкам" note="Столбик — выручка периода, цвет — точка" action={<Seg value={g} onChange={setG} options={GROUPS} label="Группировка" className="shrink-0 flex-nowrap" />}>
         <div ref={ref} className="overflow-x-auto" role="img" aria-label="Выручка по периодам">
           {!n ? <p className="py-10 text-center text-[13px] text-muted-foreground">Нет продаж за период</p> : w > 0 && (
-            <BarChart width={W} height={250} data={data} margin={{ top: 12, right: 8, left: 0, bottom: 4 }} barCategoryGap="22%">
+            <BarChart width={W} height={330} data={data} margin={{ top: 12, right: 8, left: 0, bottom: 4 }} barCategoryGap="22%">
               <CartesianGrid vertical={false} stroke="var(--border)" />
               <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} interval={Math.max(0, Math.ceil(n / Math.max(4, Math.floor(W / 56))) - 1)} />
               <YAxis width={58} tickLine={false} axisLine={false} domain={[0, top]} ticks={Array.from({ length: Math.round(top / step) + 1 }, (_, i) => i * step)} tickFormatter={(v: number) => fmtM(v).replace(" ", " ")} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />

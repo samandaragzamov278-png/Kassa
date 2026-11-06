@@ -142,3 +142,9 @@ body::before { content: ""; position: fixed; inset: -14px; z-index: -1; pointer-
   .num { font-variant-numeric: tabular-nums; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+
+/* тонкие полосы прокрутки в стиле стекла (вместо белых системных) */
+* { scrollbar-width: thin; scrollbar-color: color-mix(in oklab, var(--muted-foreground) 45%, transparent) transparent; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: color-mix(in oklab, var(--muted-foreground) 40%, transparent); border-radius: 999px; }

@@ -133,7 +133,7 @@ function Detail({ ch, ks, d, p }: { ch: BzCheck[]; ks: KSale[]; d: string; p: st
   });
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid items-start gap-4 xl:grid-cols-2">
+      <div className="grid gap-4 xl:grid-cols-2">
         <div><h3 className="mb-1 text-[14.5px] font-semibold">Billz · {p} · {dL(d)}</h3>
           <Tbl head={["Время", "Чек", "Товары", ["Сумма", "r"], "Оплата", ""]}>
             {B.map((b, i) => <Tr key={i} tone={b.m ? undefined : "bad"}><Td h>{hm(b.c.t)}</Td><Td l="Чек"><span className="num">{String(b.c.num).slice(-3)}</span><br /><span className="text-[12px] text-muted-foreground">{b.c.type || ""}</span></Td><Td l="Товары">{items(b.c)}</Td>

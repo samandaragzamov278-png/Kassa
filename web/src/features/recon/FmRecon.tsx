@@ -65,7 +65,7 @@ function Det({ d, o }: { d: Data; o: ReturnType<typeof fmReconRows>[number] }) {
   o.k.rows.forEach((s) => { const parts: [string, number][] = s.pay === "Смешанная" && s.pays ? Object.entries(s.pays) : [[s.pay, +s.sum || 0]]; parts.forEach(([pay, v]) => { (by[pay] ||= []).push({ s, v: +v || 0 }); }); });
   const m = fmMod(d, o.p), x = o.x;
   return (
-    <div className="grid items-start gap-5 md:grid-cols-2">
+    <div className="grid gap-5 md:grid-cols-2">
       <div><h3 className="mb-2 text-[14.5px] font-semibold">Касса · {o.p} · {dL(o.d)}</h3>
         {Object.entries(by).map(([pay, L]) => (
           <div key={pay} className="mb-2"><h4 className="text-[13px] font-semibold">{pay} <span className="font-normal text-muted-foreground">{L.length} {pl(L.length, "запись", "записи", "записей")} · {fmt(L.reduce((a, b) => a + b.v, 0))}</span></h4>

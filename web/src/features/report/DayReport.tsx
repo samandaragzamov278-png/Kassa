@@ -118,7 +118,7 @@ export function DayReport({ d, open: openReq }: { d: Data; open: { day: string; 
           </Tbl>
         </Panel>
 
-        <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
           <Panel title="Расчётный счёт" note="Остаток по выписке банка и расходы, списанные со счёта" action={<span className="flex items-center gap-2"><span className={cn("text-[12px] text-plus transition-opacity", saved ? "opacity-100" : "opacity-0")}>Сохранено</span><Badge /></span>}>
             <RsPanel key={day} d={d} day={day} cumBank={row.cum.bank - row.bankSum} save={save} />
           </Panel>

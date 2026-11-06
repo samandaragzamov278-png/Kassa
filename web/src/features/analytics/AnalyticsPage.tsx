@@ -106,7 +106,7 @@ export function AnalyticsPage({ d }: { d: Data }) {
         : (
           <>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{m.cards.map((k, i) => <Tile key={k.id + k.label} c={k} i={i} hintsOn={hintsOn} />)}</div>
-            <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">{out.map((x, i) => <Fragment key={i}>{x}</Fragment>)}</div>
+            <div className="grid grid-flow-row-dense gap-4 md:grid-cols-2 xl:grid-cols-3">{out.map((x, i) => <Fragment key={i}>{x}</Fragment>)}</div>
           </>
         )}
     </div>

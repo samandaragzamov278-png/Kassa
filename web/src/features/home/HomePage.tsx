@@ -73,7 +73,7 @@ export function HomePage({ d }: { d: Data }) {
       </div>
 
       {/* коротко о месяце + 14 дней */}
-      <div className="grid items-start gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="Коротко о месяце" note={h.briefNote}>
           {h.brief.length ? (
             <div className="grid gap-3 sm:grid-cols-2">
@@ -114,7 +114,7 @@ export function HomePage({ d }: { d: Data }) {
       </section>
 
       {/* точки + последние продажи */}
-      <div className="grid items-start gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="Точки сегодня" note={h.ptNote}>
           {h.pts.length ? (
             <div className="flex flex-col gap-4">

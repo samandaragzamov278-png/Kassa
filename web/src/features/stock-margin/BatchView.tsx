@@ -107,7 +107,7 @@ export function BatchView({ c }: { c: Ctx }) {
       </section>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{v.cards.map((k, i) => <Tile key={k.label} c={k} i={i} hintsOn={null} />)}</div>
-      <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Wd title="Продано и осталось" hintsOn={null}><DonutC items={[{ label: "Продано", value: v.SC, valTxt: fmt(v.SC) + " шт", color: "var(--primary)" }, { label: "Осталось", value: v.L, valTxt: fmt(v.L) + " шт", color: "var(--border)" }]} center={pctF(v.Q ? v.SC / v.Q : 0)} sub="продано" /></Wd>
         <Wd title="Продажи партии по точкам" hintsOn={null}><HBars items={Object.entries(byP).sort((x, y) => y[1] - x[1]).map(([k, n]) => ({ label: k, value: n, valTxt: n + " шт", color: pointColor(c.points, k) }))} /></Wd>
         <Wd title="Группы: какая уходит быстрее" note="Процент проданного от пришедшего" hintsOn={null}><HBars items={gl.slice(0, 14).map((o) => ({ label: o.k, value: o.q ? o.s / o.q * 100 : 0, valTxt: pctF(o.q ? o.s / o.q : 0), color: "var(--chart-3)", sub: `${o.s} из ${o.q} шт` }))} /></Wd>

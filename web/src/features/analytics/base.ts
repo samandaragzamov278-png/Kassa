@@ -51,7 +51,7 @@ export const periodTxt = (F: Flt, list: S[], extra = "") => {
 };
 
 // ===== цвета =====
-const PCOL = ["var(--chart-2)", "var(--chart-1)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
+const PCOL = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 export const pointColor = (points: string[], p: string) => { const i = points.indexOf(p); return PCOL[(i < 0 ? points.length : i) % PCOL.length]; };
 export const PAYCOL: Record<string, string> = { "Наличные": "var(--chart-3)", "Терминал": "var(--chart-1)", "QR/Payme": "var(--chart-2)", "Перечисление": "var(--chart-4)" };
 export const CATCOL = ["var(--chart-1)", "var(--chart-3)", "var(--chart-4)", "var(--chart-2)", "var(--chart-5)",

@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { Tile, Bar } from "./parts";
 import { fmt, pctF, plColor, type PlanCalc, type PointRow } from "./logic";
 
-const PCOL = ["var(--chart-1)", "var(--chart-3)", "var(--chart-4)", "var(--chart-2)", "var(--chart-5)"];
+const PCOL = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 export const pointColor = (points: string[], p: string) => { const i = points.indexOf(p); return PCOL[(i < 0 ? points.length : i) % PCOL.length]; };
 
 const Cell = ({ k, v, color }: { k: string; v: string; color?: string }) => (
