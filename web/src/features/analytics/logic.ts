@@ -189,7 +189,7 @@ export function buildAnalytics(c: Ctx, F: Flt, on: (id: number) => boolean, pgCa
   if (on(18)) W([18], "Рейтинг точек", "По выручке, в скобках — изменение к прошлому периоду", { kind: "hbars", rank: true, items: ptItems.map((o) => ({ label: o.k, value: o.r, color: PC(o.k), sub: gpp[o.k] ? pctTxt(o.r, gpp[o.k].r) : "" })) });
   if (on(19)) W([19], "Выручка на рабочий день", "Выручка точки, делённая на дни, когда у неё были продажи", { kind: "hbars", items: ptItems.map((o) => ({ label: o.k, value: o.r / o.days.size, color: PC(o.k), sub: `${o.days.size} дн.` })).sort((x, y) => y.value - x.value) });
   const cashBy: Record<string, number> = {}; list.forEach((s) => (cashBy[s.point] = (cashBy[s.point] || 0) + +(payOf(s)["Наличные"] || 0)));
-  if (on(20)) W([20], "Б/Ч по точкам", "Наличные: Премиум, Яшнабад и C1 идут в кассу, Сергели остаётся на точке", { kind: "hbars", items: Object.entries(cashBy).sort((x, y) => y[1] - x[1]).map(([k, v]) => ({ label: k, value: v, color: PC(k), sub: KASSA_POINTS.includes(k) ? "· в кассу" : "· на точке" })) });
+  if (on(20)) W([20], "Б/Ч по точкам", "Наличные: Премиум и Яшнабад идут в кассу, Сергели и C1 остаются на точке", { kind: "hbars", items: Object.entries(cashBy).sort((x, y) => y[1] - x[1]).map(([k, v]) => ({ label: k, value: v, color: PC(k), sub: KASSA_POINTS.includes(k) ? "· в кассу" : "· на точке" })) });
   if (on(22)) { const py: Record<string, number> = {}; list.forEach((s) => Object.entries(payOf(s)).forEach(([k, v]) => (py[k] = (py[k] || 0) + v))); W([22], "Способы оплаты", "", { kind: "donut", items: PAYS.filter((p) => py[p]).map((p) => ({ label: p, value: py[p], color: PAYCOL[p] })), center: fmtM(a.rev), sub: "всего" }); }
   if (on(23)) {
     const eb: Record<string, number> = {}, ea: Record<string, number> = {};
@@ -198,7 +198,7 @@ export function buildAnalytics(c: Ctx, F: Flt, on: (id: number) => boolean, pgCa
   }
   if (on(25)) {
     const kc = KASSA_POINTS.filter((p) => F.point === "all" || p === F.point), bc = kc.reduce((x, p) => x + (cashBy[p] || 0), 0), ke = ex.filter((e) => kc.includes(e.branch || "")).reduce((x, e) => x + entAmt(e), 0);
-    W([25], "Б/Ч в кассу после расходов", "Премиум, Яшнабад и C1: наличные минус расходы дня", { kind: "waterfall", steps: kc.length ? [{ label: "Б/Ч", value: bc, type: "start" }, { label: "Расходы дня", value: -ke, type: "minus" }, { label: "Остаётся", value: bc - ke, type: "total" }] : null });
+    W([25], "Б/Ч в кассу после расходов", "Премиум и Яшнабад: наличные минус расходы дня", { kind: "waterfall", steps: kc.length ? [{ label: "Б/Ч", value: bc, type: "start" }, { label: "Расходы дня", value: -ke, type: "minus" }, { label: "Остаётся", value: bc - ke, type: "total" }] : null });
   }
   if (on(27)) {
     const cl = [...c.d.cashlog].filter((x) => { const d = new Date((x.at || 0) + 5 * 3600e3).toISOString().slice(0, 10); return d >= r.from && d <= r.to; }).sort((x, y) => (x.at || 0) - (y.at || 0)).slice(-30);

@@ -80,7 +80,7 @@ export function homeData(d: Data, today: string) {
   const gr = prevM ? Math.round(((mRev - prevM) / prevM) * 100) : null;
   const kd = k.diff;
   const cards: SectionCard[] = [
-    { id: "kassa", icon: "cash", title: "Касса", hint: "Наличные Премиума, Яшнабада и C1, расходы и пересчёт",
+    { id: "kassa", icon: "cash", title: "Касса", hint: "Наличные Премиума и Яшнабада, расходы и пересчёт",
       nums: [[fmtM(k.expected), "должно быть"], [k.actual != null ? (kd! >= 0 ? "+" : "−") + fmtM(Math.abs(kd!)) : "—", k.actual != null ? (kd! >= 0 ? "излишек" : "недостача") : "не пересчитано"]] },
     { id: "sales", icon: "receipt", title: "Продажи", hint: "Внести продажу или расход дня, касса дня по точкам", nums: [[fmtM(dayRev), "выручка " + lbl], [String(dayList.length), "позиций " + lbl]] },
     { id: "analytics", icon: "chart", title: "Аналитика", hint: "58 показателей и графиков за любой период", nums: [[fmtM(mRev), "за месяц"], [gr == null ? "—" : (gr >= 0 ? "+" : "") + gr + "%", "к прошлому месяцу"]] },

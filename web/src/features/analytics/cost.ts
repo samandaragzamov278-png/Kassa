@@ -19,7 +19,7 @@ export interface FinCfg { months?: string[]; taxPct?: number; mgr?: { points?: s
 export interface PlanCfg { months: Record<string, { total?: number; shares?: Record<string, number> }>; sellers: Record<string, string>; off: number[] }
 
 export const DEF_POINTS = ["Премиум", "Яшнабад", "Сергели", "C1"];
-export const KASSA_POINTS = ["Премиум", "Яшнабад", "C1"];
+export const KASSA_POINTS = ["Премиум", "Яшнабад"];
 export const DEF_CATS = ["Оправы", "Детские оправы", "Очковые линзы", "Солнцезащитные очки", "Контактные линзы", "Растворы и капли", "Аксессуары", "Ремонт и услуги"];
 export const PAYS = ["Наличные", "Терминал", "QR/Payme", "Перечисление"];
 export const NODET = "Без детализации";

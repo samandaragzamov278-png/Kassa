@@ -36,7 +36,7 @@ export function ExpenseBox({ exp, settings, onAdd, onDelete }: { exp: DayExp[]; 
   };
 
   return (
-    <Panel title="Расход дня" note="Такси, доставка, мастер, вода и т.п. Расходы Премиума, Яшнабада и C1 сразу попадают в кассу.">
+    <Panel title="Расход дня" note="Такси, доставка, мастер, вода и т.п. Расходы Премиума и Яшнабада сразу попадают в кассу.">
       <form onSubmit={submit} autoComplete="off" className="grid gap-3 sm:grid-cols-2">
         <Field label="Дата"><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label="Дата расхода" className="num" /></Field>
         <Field label="Точка"><Sel label="Точка расхода" value={pt} onChange={setPoint} options={settings.points} /></Field>

@@ -53,7 +53,7 @@ export function DayCash({ rows, points, F }: { rows: DayCashRow[]; points: strin
   const blocks = dayCashBlocks(rows, points, F);
   const tg = (p: string) => setOpen((s) => { const n = new Set(s); n.has(p) ? n.delete(p) : n.add(p); return n; });
   return (
-    <Panel title="Касса дня по точкам" note="Отдельная таблица на каждую точку: оплаты, расходы дня и наличные после расходов. Б/Ч Премиума, Яшнабада и C1 идёт в кассу, Б/Ч Сергели остаётся на точке.">
+    <Panel title="Касса дня по точкам" note="Отдельная таблица на каждую точку: оплаты, расходы дня и наличные после расходов. Б/Ч Премиума и Яшнабада идёт в кассу, Б/Ч Сергели и C1 остаётся на точке.">
       <div className="grid gap-2.5">
         {blocks.map((b) => <BlockView key={b.pt} b={b} points={points} open={open.has(b.pt)} toggle={() => tg(b.pt)} />)}
         {!rows.length && <p className="text-[13px] text-muted-foreground">За выбранный период нет ни продаж, ни расходов дня.</p>}

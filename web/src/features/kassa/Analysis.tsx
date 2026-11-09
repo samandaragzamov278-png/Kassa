@@ -45,6 +45,7 @@ export function Insights({ items }: { items: string[] }) {
 export function DayChart({ days }: { days: BcDay[] }) {
   const data = days.map((d) => ({ d: dShort(d.d), Премиум: d.p, Яшнабад: d.y, C1: d.c || 0 }));
   if (!data.length) return <p className="text-[13px] text-muted-foreground">В этом месяце продаж наличными ещё нет.</p>;
+  const hasC = days.some((d) => d.c); // C1 в кассе выключена, серию показываем только если есть данные
   return (
     <div className="h-[340px]">
       <ResponsiveContainer>
@@ -53,7 +54,7 @@ export function DayChart({ days }: { days: BcDay[] }) {
           <XAxis dataKey="d" fontSize={11} tickLine={false} axisLine={false} stroke="var(--muted-foreground)" />
           <YAxis width={64} fontSize={11} tickLine={false} axisLine={false} stroke="var(--muted-foreground)" tickFormatter={(v) => (v / 1e6).toFixed(1).replace(".", ",") + " млн"} />
           <Tooltip cursor={{ fill: "var(--muted)" }} formatter={(v) => fmt(Number(v))} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 12, color: "var(--foreground)" }} />
-          <Bar dataKey="Премиум" stackId="a" fill="var(--chart-1)" /><Bar dataKey="Яшнабад" stackId="a" fill="var(--chart-2)" /><Bar dataKey="C1" stackId="a" fill="var(--chart-4)" radius={[6, 6, 0, 0]} />
+          <Bar dataKey="Премиум" stackId="a" fill="var(--chart-1)" /><Bar dataKey="Яшнабад" stackId="a" fill="var(--chart-2)" radius={hasC ? 0 : [6, 6, 0, 0]} />{hasC && <Bar dataKey="C1" stackId="a" fill="var(--chart-4)" radius={[6, 6, 0, 0]} />}
         </BarChart>
       </ResponsiveContainer>
     </div>

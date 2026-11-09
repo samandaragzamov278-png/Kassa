@@ -41,7 +41,7 @@ export function KassaPage({ d, focus }: { d: Data; focus?: "expense" | "cash" | 
   const xlsx = async () => {
     try {
       const X = await import("xlsx");
-      const sum = [["Б/Ч Премиум", c.bcP], ["Б/Ч Яшнабад", c.bcY], ["Б/Ч C1", c.bcC], ["Б/Ч всего", c.bcT], ["+ Приходы", c.sInc], ["− Операционные расходы", -c.sOp], ["− Прочие расходы", -c.sOth],
+      const sum = [["Б/Ч Премиум", c.bcP], ["Б/Ч Яшнабад", c.bcY], ["Б/Ч всего", c.bcT], ["+ Приходы", c.sInc], ["− Операционные расходы", -c.sOp], ["− Прочие расходы", -c.sOth],
         ["Должно быть на руках", c.expected], ["Фактическая наличка", st ? st.actual : null], ["Излишек / недостача", st ? st.actual - c.expected : null], ["Сэкономлено против плана", c.saved]];
       const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, X.utils.aoa_to_sheet([["Показатель", "Сумма"], ...sum]), "Итог");
       X.utils.book_append_sheet(wb, X.utils.json_to_sheet(c.days.map((x) => ({ "Дата": x.d, "Премиум": x.p, "Яшнабад": x.y, "C1": x.c, "Источник": x.src }))), "Б/Ч по дням");
@@ -53,9 +53,9 @@ export function KassaPage({ d, focus }: { d: Data; focus?: "expense" | "cash" | 
   return (
     <div className="flex flex-col gap-5">
       <header className="flex flex-wrap items-end justify-between gap-4">
-        <div><div className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Saif-Optics · наличные (Б/Ч) · Премиум, Яшнабад и C1</div>
+        <div><div className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Saif-Optics · наличные (Б/Ч) · Премиум и Яшнабад</div>
           <h1 className="text-[34px] leading-tight font-bold tracking-tight">Касса</h1>
-          <p className="text-[15px] text-muted-foreground">Б/Ч Премиума, Яшнабада и C1 + приходы − расходы дня − прочие расходы</p></div>
+          <p className="text-[15px] text-muted-foreground">Б/Ч Премиума и Яшнабада + приходы − расходы дня − прочие расходы</p></div>
         <Button variant="secondary" size="lg" onClick={xlsx}><FileSpreadsheet />Выгрузить Excel</Button>
       </header>
       {ms.length > 1 && <Tabs value={M} onValueChange={setSel}><TabsList className="h-auto flex-wrap">{ms.map((m) => <TabsTrigger key={m} value={m} className="px-4 py-1.5">{monthName(m)}</TabsTrigger>)}</TabsList></Tabs>}
@@ -73,7 +73,7 @@ export function KassaPage({ d, focus }: { d: Data; focus?: "expense" | "cash" | 
         </div>
       </div>
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <Panel title="Б/Ч по дням" note="Наличные продаж Премиума, Яшнабада и C1 за каждый день месяца."><DayChart days={c.days} /></Panel>
+        <Panel title="Б/Ч по дням" note="Наличные продаж Премиума и Яшнабада за каждый день месяца."><DayChart days={c.days} /></Panel>
         <Panel title="Расходы с Б/Ч по статьям"><Articles a={a} /></Panel>
       </div>
       <Panel title="Журнал записей" note="Факт — нажмите на сумму, если потратили не столько, сколько планировали.">

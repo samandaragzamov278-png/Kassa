@@ -30,7 +30,7 @@ export const newId = () => Date.now().toString(36) + Math.random().toString(36).
 
 // ===================== справочники =====================
 export const DEF_POINTS = ["Премиум", "Яшнабад", "Сергели", "C1"];
-export const KASSA_POINTS = ["Премиум", "Яшнабад", "C1"];
+export const KASSA_POINTS = ["Премиум", "Яшнабад"];
 export const DEF_CATS = ["Оправы", "Детские оправы", "Очковые линзы", "Солнцезащитные очки", "Контактные линзы", "Растворы и капли", "Аксессуары", "Ремонт и услуги"];
 export const PAYS = ["Наличные", "Терминал", "QR/Payme", "Перечисление"];
 export const PAYSHORT: Record<string, string> = { "Наличные": "Нал", "Терминал": "Тер", "QR/Payme": "QR", "Перечисление": "Пер" };
@@ -344,7 +344,7 @@ export function sheetsOf(c: Ctx, F: Filter): Sheet[] {
       head: ["Дата", "День", "Точка", "Чек", "Категория", "Товар", "Кол-во", "Цена, сум", "Скидка, сум", "Оплачено, сум", ...PAYS.map((p) => p + ", сум"), "Источник"],
       rows: rows.map((r) => [r.d, r.wd, r.p, r.ch, r.c, r.pr, r.q, r.pc, r.ds, r.sm, ...PAYS.map((_, i) => r["y" + i]), r.src]),
       total: ["Итого", "", "", "", "", "", T(rows, "q"), "", T(rows, "ds"), tot, ...PAYS.map((_, i) => T(rows, "y" + i)), ""] },
-    { name: "Касса дня", title: "Касса дня по точкам", subtitle: sub + " · Б/Ч Премиума, Яшнабада и C1 идёт в кассу",
+    { name: "Касса дня", title: "Касса дня по точкам", subtitle: sub + " · Б/Ч Премиума и Яшнабада идёт в кассу",
       head: ["Дата", "Точка", ...PAYS.map((p) => p + ", сум"), "Итого, сум", "Расходы дня, сум", "Б/Ч после расходов, сум", "Куда Б/Ч"],
       rows: dcRows.map((r) => [r.d, r.p, ...PAYS.map((_, i) => r["y" + i]), r.tot, r.e, r.a, r.k]),
       total: ["Итого", "", ...PAYS.map((_, i) => T(dcRows, "y" + i)), T(dcRows, "tot"), T(dcRows, "e"), T(dcRows, "a"), ""] },
