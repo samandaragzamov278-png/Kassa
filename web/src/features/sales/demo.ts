@@ -34,6 +34,14 @@ export function demoExtra(): Row[] {
     }
     if (d.getUTCDay() === 3) out.push({ col: "entries", id: "sales_exp_" + day, data: { date: day, name: "C1 за доставку линз", type: "exp", cat: "op", amount: 40000, branch: "C1", source: "day", createdAt: now - 864e5 } });
   }
+  // Долги в формате пометок: два открытых (один из прошлого месяца), один закрытый погашением. Суммы выдуманные.
+  const dd = (back: number) => iso(new Date(today.getTime() - 864e5 * back)), dm = (day: string) => day.slice(8, 10) + "." + day.slice(5, 7);
+  const dA = dd(6), dB = dd(3), dOld = iso(new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 12)));
+  const mk = (id: string, date: string, point: string, product: string, sum: number, note: string, cat = "Оправы") => out.push({ col: "sales", id, data: { date, point, cat, product, qty: 1, price: sum, sum, check: "90", pay: "Наличные", pays: null, note, createdAt: now - 864e5 + ++n } });
+  mk("sales_debt1", dA, "Премиум", "Оправа 7708", 400000, "Чек 1 000 000, задаток 400 000 наличными; долг 600 000 не записан");
+  mk("sales_debt2", dB, "Яшнабад", "Оправа 5801", 300000, "Чек 800 000, задаток 300 000 наличными; долг 500 000 не записан");
+  mk("sales_debt3", dOld, "Премиум", "Линзы Seiko 1.67", 200000, "Чек 700 000, задаток 200 000 наличными; долг 500 000 не записан", "Очковые линзы");
+  mk("sales_debt1p", dd(2), "Премиум", "Погашение долга Оправа 7708 (продажа " + dm(dA) + ")", 600000, "Долг 600 000 от " + dm(dA) + ", оплачено 600 000 наличными — долг закрыт", "Погашения долгов");
   out.push({ col: "photos", id: "sales_ph1", data: { name: "лист_премиум.jpg", kind: "image", point: "Премиум", date: iso(start), status: "done", salesCount: 14, uploadedAt: now - 864e5 * 5 } });
   out.push({ col: "photos", id: "sales_ph2", data: { name: "тетрадь.pdf", kind: "pdf", point: "", date: iso(today), status: "new", uploadedAt: now - 864e5 } });
   return out;

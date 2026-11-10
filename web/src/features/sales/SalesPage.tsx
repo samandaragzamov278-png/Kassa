@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { SalesFilter, useSalesFilter } from "./filter";
 import { Calendar } from "./Calendar";
 import { DayCash } from "./DayCash";
+import { Debts } from "./DebtsPanel";
 import { SaleForm, type SaleRec } from "./SaleForm";
 import { ExpenseBox } from "./ExpenseBox";
 import { Stats } from "./Stats";
@@ -64,7 +65,7 @@ export function SalesPage({ d }: { d: Data }) {
         <span className="glass inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] text-muted-foreground"><i className="size-2 rounded-full bg-plus" />Сохраняется автоматически</span>
       </header>
       <SalesFilter d={d} />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 @5xl/main:grid-cols-4">
         <Kpi i={0} tone="primary" label="Выручка" value={fmt(a.rev) + " сум"} sub={<Cmp cur={a.rev} prev={pa && pa.rev} />} />
         <Kpi i={1} label="Чеков / позиций" value={`${fmt(a.checks)} / ${fmt(a.n)}`} sub={<Cmp cur={a.checks} prev={pa && pa.checks} />} />
         <Kpi i={2} label="Средний чек" value={fmt(a.avg) + " сум"} sub={<Cmp cur={a.avg} prev={pa && pa.avg} />} />
@@ -72,6 +73,7 @@ export function SalesPage({ d }: { d: Data }) {
       </div>
       <Calendar c={c} F={F} jDay={jDay} onOpenDay={openDay} />
       <DayCash rows={rows} points={c.settings.points} F={F} />
+      <Debts sales={c.sales} F={F} />
       <div className="grid gap-4 xl:grid-cols-2">
         <SaleForm sales={c.sales} settings={c.settings} editing={editing} onSave={save} onCancel={() => setEditing(null)} />
         <ExpenseBox exp={ex} settings={c.settings} onAdd={addExp} onDelete={(id) => mu.delEntry(id)} />

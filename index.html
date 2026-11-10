@@ -2590,6 +2590,14 @@ window.__zw=function(){return innerWidth/(window.__uiZ||1)};window.__zh=function
       <div class="empty" id="dayCashEmpty" hidden>За выбранный период нет ни продаж, ни расходов дня.</div>
     </section>
 
+    <section class="panel">
+      <div class="head" style="margin-bottom:10px">
+        <div><h2>Долги</h2><p class="note">Долги из пометок «долг … не записан» и их погашения. «Старый» — продажа раньше выбранного периода.</p></div>
+      </div>
+      <div class="note" id="debtsSum" style="margin-bottom:8px"></div>
+      <div class="tbl" id="debtsWrap" hidden><table id="debtsTable"></table></div>
+    </section>
+
     <section class="grid2">
       <div class="panel" id="saleFormPanel">
         <div class="ph"><h2 id="saleFormTitle">Новая продажа</h2><p class="note">Одна строка — одна позиция. Сумма = кол-во × цена; если заплатили меньше, впишите фактическую сумму, разница считается скидкой.</p></div>
@@ -4146,6 +4154,41 @@ window.SaifXL=(function(){
   $("sCalPrev").onclick=()=>calShift(-1);$("sCalNext").onclick=()=>calShift(1);
   $("sCalToday").onclick=()=>{const t=iso(new Date());calDir=t.slice(0,7)<calM?-1:1;calM=t.slice(0,7);calSel=t;renderCal()};
 
+  // ---- долги: возникновение «долг N не записан» в пометке чека, погашение — строка cat «Погашения долгов» ----
+  function debtsOf(from,to,point){
+    const src=point&&point!=="all"?sales.filter(s=>s.point===point):sales;
+    const isRep=s=>s.cat==="Погашения долгов"||String(s.product||"").indexOf("Погашение долга")===0;
+    const RD=/долг\s+(\d[\d\s\u00a0\u202f]*?)\s*не\s+записан/i, RS=/\(\s*продажа\s+(\d{1,2})\.(\d{1,2})\s*\)/i, RF=/долг\s+(\d[\d\s\u00a0\u202f]*?)\s*от(?![а-яёa-z])/i, RC=/долг\s+закрыт/i;
+    const n0=x=>parseInt(String(x).replace(/\D/g,""),10)||0, groups={}, reps=[];
+    src.forEach(s=>{if(isRep(s)){reps.push(s);return}const k=s.date+"|"+s.point+"|"+(s.check?s.check:"_"+s.id);(groups[k]=groups[k]||[]).push(s)});
+    const all=[];
+    Object.keys(groups).forEach(k=>{const rs=groups[k], w=rs.find(s=>RD.test(String(s.note||"")));if(!w)return;const debt=n0(RD.exec(w.note)[1]);if(!debt)return;
+      const paid=rs.reduce((x,s)=>x+(+s.sum||0),0), pr=[...new Set(rs.map(s=>String(s.product||"").trim()).filter(Boolean))];
+      all.push({key:k,date:w.date,point:w.point,product:pr.join(" + "),full:paid+debt,paid,debt,pays:[],repaid:0,closedAt:null,rest:debt})});
+    const orph=[];
+    reps.sort((a,b)=>String(a.date).localeCompare(b.date));
+    reps.forEach(r=>{const note=String(r.note||""), m=RS.exec(String(r.product||""));let sd=null;
+      if(m){const mm=("0"+m[2]).slice(-2), dd=("0"+m[1]).slice(-2);let y=+r.date.slice(0,4);if(y+"-"+mm+"-"+dd>r.date)y--;sd=y+"-"+mm+"-"+dd}
+      const c=sd?all.filter(d=>d.point===r.point&&d.date===sd):[], fm=RF.exec(note), want=fm?n0(fm[1]):0;
+      const hit=c.find(d=>want&&d.debt===want)||c.find(d=>!d.closedAt)||null, sum=+r.sum||0;
+      if(!hit){orph.push({date:r.date,point:r.point,product:r.product||"",sum});return}
+      hit.pays.push({date:r.date,sum});hit.repaid+=sum;
+      if(!hit.closedAt&&(hit.repaid>=hit.debt||RC.test(note)))hit.closedAt=r.date});
+    all.forEach(d=>d.rest=d.closedAt?0:Math.max(0,d.debt-d.repaid));
+    const inP=x=>x>=from&&x<=to;
+    const rows=all.filter(d=>inP(d.date)||d.pays.some(p=>inP(p.date))||!d.closedAt).sort((a,b)=>a.date.localeCompare(b.date)||a.point.localeCompare(b.point));
+    const open=rows.filter(d=>!d.closedAt);
+    return {rows,orph:orph.filter(o=>inP(o.date)),openN:open.length,openSum:open.reduce((x,d)=>x+d.rest,0),closedN:all.filter(d=>d.closedAt&&inP(d.closedAt)).length}
+  }
+  function renderDebts(){
+    const r=debtsOf(F.from,F.to,F.point), none=!r.rows.length&&!r.orph.length, dash='<span class="srcs">—</span>';
+    $("debtsSum").innerHTML=none?"Долгов нет":`Открыто: <b class="num">${r.openN}</b> на сумму <b class="num">${fmt(r.openSum)}</b> · Закрыто за период: <b class="num">${r.closedN}</b>`;
+    $("debtsWrap").hidden=none;
+    $("debtsTable").innerHTML=none?"":`<thead><tr><th>Дата продажи</th><th>Точка</th><th>Товар</th><th class="r">Чек</th><th class="r">Оплачено при продаже</th><th class="r">Долг</th><th class="r">Погашено</th><th>Статус</th></tr></thead><tbody>`+
+      r.rows.map(d=>`<tr><td class="num">${dShort(d.date)}${d.date<F.from?' <span class="srcs">старый</span>':""}</td><td>${esc(d.point)}</td><td>${esc(d.product)}</td><td class="r num">${fmt(d.full)}</td><td class="r num">${fmt(d.paid)}</td><td class="r num"><b>${fmt(d.debt)}</b></td><td class="r num">${d.pays.length?fmt(d.repaid)+' <span class="srcs">'+d.pays.map(p=>dShort(p.date)).join(", ")+"</span>":dash}</td><td>${d.closedAt?'<span class="up">закрыт '+dShort(d.closedAt)+"</span>":'<span class="down">остаток '+fmt(d.rest)+"</span>"}</td></tr>`).join("")+
+      r.orph.map(o=>`<tr><td class="num">${dShort(o.date)}</td><td>${esc(o.point)}</td><td>${esc(o.product)}</td><td class="r">${dash}</td><td class="r">${dash}</td><td class="r">${dash}</td><td class="r num">${fmt(o.sum)}</td><td><span class="srcs">погашение без продажи</span></td></tr>`).join("")+`</tbody>`;
+  }
+
   function renderSales(){
     if(tab!=="sales")return;
     try{renderCal()}catch(err){console.error(err)}
@@ -4168,6 +4211,8 @@ window.SaifXL=(function(){
       rs.map(o=>`<tr><td class="num">${dShort(o.d)} <span class="srcs">${WD[wdIdx(o.d)]}</span></td>${PAYS.map(p=>`<td class="r num">${o.pay[p]?fmt(o.pay[p]):'<span class="srcs">—</span>'}</td>`).join("")}<td class="r num"><b>${fmt(o.tot)}</b></td><td class="r num">${o.exp?'<span class="down">−'+fmt(o.exp)+"</span>":'<span class="srcs">—</span>'}</td><td class="r num"><b>${fmt(o.after)}</b></td></tr>`).join("")+
       `</tbody><tfoot><tr><td><b>Итого</b></td>${PAYS.map(p=>`<td class="r num"><b>${fmt(T(o=>o.pay[p]||0))}</b></td>`).join("")}<td class="r num"><b>${fmt(T("tot"))}</b></td><td class="r num"><b>−${fmt(T("exp"))}</b></td><td class="r num"><b>${fmt(T("after"))}</b></td></tr></tfoot></table></div></div>`}).join("");
     $("dayCashWrap").querySelectorAll("[data-dc]").forEach(b=>b.onclick=()=>{const p=b.dataset.dc;dcOpen.has(p)?dcOpen.delete(p):dcOpen.add(p);renderSales()});
+
+    try{renderDebts()}catch(err){console.error(err)}
 
     // расходы дня — список
     const exAll=[...ex].sort((x,y)=>(y.date||"").localeCompare(x.date||"")||(y.createdAt||0)-(x.createdAt||0));const exs=exAll;
